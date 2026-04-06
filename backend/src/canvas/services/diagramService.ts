@@ -1,6 +1,9 @@
 import { getPrisma } from '../../core/databaseService';
 import logger from '../../core/logger';
+import type { Prisma } from '@prisma/client';
 import type { DiagramNodeRaw, DiagramEdgeRaw, DiagramMeta, DiagramFull, DiagramVersionMeta, SaveDiagramPayload } from '@shared/types';
+
+type JsonArray = Prisma.InputJsonValue[];
 
 const MAX_VERSIONS = 20;
 const VERSION_EVERY_N_SAVES = 10;
@@ -44,9 +47,9 @@ export const diagramService = {
       name: diagram.name,
       description: diagram.description ?? undefined,
       thumbnail: diagram.thumbnail ?? undefined,
-      nodes: diagram.nodes as DiagramNodeRaw[],
-      edges: diagram.edges as DiagramEdgeRaw[],
-      viewport: diagram.viewport as { x: number; y: number; zoom: number } | undefined,
+      nodes: diagram.nodes as unknown as DiagramNodeRaw[],
+      edges: diagram.edges as unknown as DiagramEdgeRaw[],
+      viewport: diagram.viewport as unknown as { x: number; y: number; zoom: number } | undefined,
       createdAt: diagram.createdAt.toISOString(),
       updatedAt: diagram.updatedAt.toISOString(),
     };
@@ -75,9 +78,9 @@ export const diagramService = {
       where: { id },
       data: {
         name: payload.name,
-        nodes: payload.nodes,
-        edges: payload.edges,
-        viewport: payload.viewport ?? undefined,
+        nodes: payload.nodes as unknown as JsonArray,
+        edges: payload.edges as unknown as JsonArray,
+        viewport: payload.viewport as unknown ?? undefined,
         thumbnail: payload.thumbnail ?? undefined,
         saveCount: { increment: 1 },
       },
@@ -91,8 +94,8 @@ export const diagramService = {
         data: {
           diagramId: id,
           version: versionCount + 1,
-          nodes: payload.nodes,
-          edges: payload.edges,
+          nodes: payload.nodes as unknown as JsonArray,
+          edges: payload.edges as unknown as JsonArray,
         },
       });
 
@@ -142,7 +145,7 @@ export const diagramService = {
 
     await prisma.diagram.update({
       where: { id: diagramId },
-      data: { nodes: snapshot.nodes, edges: snapshot.edges },
+      data: { nodes: snapshot.nodes as unknown as JsonArray, edges: snapshot.edges as unknown as JsonArray },
     });
   },
 };

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { NodeType } from '@shared/types';
 
 const mockPrisma = {
   diagram: {
@@ -23,7 +24,7 @@ vi.mock('../../../core/databaseService', () => ({
 
 import { diagramService } from '../diagramService';
 
-const mockNodes = [{ id: 'n1', type: 'microservice', position: { x: 100, y: 100 }, data: { label: 'Service', nodeType: 'microservice' } }];
+const mockNodes = [{ id: 'n1', type: 'microservice' as NodeType, position: { x: 100, y: 100 }, data: { label: 'Service', nodeType: 'microservice' as NodeType } }];
 const mockEdges = [{ id: 'e1', source: 'n1', target: 'n2' }];
 const mockDiagram = { id: 'diag-1', userId: 'user-1', name: 'Test', nodes: mockNodes, edges: mockEdges, viewport: null, description: null, thumbnail: null, createdAt: new Date(), updatedAt: new Date() };
 
