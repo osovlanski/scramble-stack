@@ -71,7 +71,7 @@ export const diagramService = {
   async save(id: string, payload: SaveDiagramPayload): Promise<void> {
     const prisma = getPrisma()!;
 
-    await prisma.diagram.update({
+    const updated = await prisma.diagram.update({
       where: { id },
       data: {
         name: payload.name,
@@ -79,12 +79,14 @@ export const diagramService = {
         edges: payload.edges,
         viewport: payload.viewport ?? undefined,
         thumbnail: payload.thumbnail ?? undefined,
+        saveCount: { increment: 1 },
       },
+      select: { saveCount: true },
     });
 
-    const versionCount = await prisma.diagramVersion.count({ where: { diagramId: id } });
+    if (updated.saveCount % VERSION_EVERY_N_SAVES === 0) {
+      const versionCount = await prisma.diagramVersion.count({ where: { diagramId: id } });
 
-    if (versionCount % VERSION_EVERY_N_SAVES === VERSION_EVERY_N_SAVES - 1) {
       await prisma.diagramVersion.create({
         data: {
           diagramId: id,
@@ -94,11 +96,11 @@ export const diagramService = {
         },
       });
 
-      if (versionCount + 1 >= MAX_VERSIONS) {
+      if (versionCount + 1 > MAX_VERSIONS) {
         const oldest = await prisma.diagramVersion.findMany({
           where: { diagramId: id },
           orderBy: { version: 'asc' },
-          take: versionCount + 1 - MAX_VERSIONS,
+          take: 1,
           select: { id: true },
         });
         await prisma.diagramVersion.deleteMany({
@@ -136,7 +138,7 @@ export const diagramService = {
       where: { diagramId, version },
     });
 
-    if (!snapshot) throw new Error(`Version ${version} not found for diagram ${diagramId}`);
+    if (!snapshot) throw new Error(`Version ${version} not found`);
 
     await prisma.diagram.update({
       where: { id: diagramId },

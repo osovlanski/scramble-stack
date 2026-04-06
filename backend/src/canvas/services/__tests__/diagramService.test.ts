@@ -43,35 +43,35 @@ describe('diagramService.list', () => {
 });
 
 describe('diagramService.save', () => {
-  it('updates diagram and creates version every 10 saves', async () => {
-    mockPrisma.diagram.update.mockResolvedValue(mockDiagram);
-    mockPrisma.diagramVersion.count.mockResolvedValue(9); // 9 existing versions → 10th save triggers snapshot
+  it('creates version snapshot on every 10th save', async () => {
+    mockPrisma.diagram.update.mockResolvedValue({ saveCount: 10 }); // 10th save triggers snapshot
+    mockPrisma.diagramVersion.count.mockResolvedValue(0);
     mockPrisma.diagramVersion.create.mockResolvedValue({});
 
     await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
-    // Should create a version on the 10th save
     expect(mockPrisma.diagramVersion.create).toHaveBeenCalled();
   });
 
-  it('does not create version before 10 saves', async () => {
-    mockPrisma.diagram.update.mockResolvedValue(mockDiagram);
-    mockPrisma.diagramVersion.count.mockResolvedValue(3);
+  it('does not create version on non-10th saves', async () => {
+    mockPrisma.diagram.update.mockResolvedValue({ saveCount: 3 }); // not a 10th save
 
     await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
     expect(mockPrisma.diagramVersion.create).not.toHaveBeenCalled();
   });
 
-  it('prunes versions beyond 20', async () => {
-    mockPrisma.diagram.update.mockResolvedValue(mockDiagram);
-    mockPrisma.diagramVersion.count.mockResolvedValue(19); // triggers version creation
-    mockPrisma.diagramVersion.create.mockResolvedValue({ id: 'v-new', version: 21 });
-    mockPrisma.diagramVersion.findMany.mockResolvedValue([{ id: 'old-v', version: 1 }]); // oldest to prune
+  it('prunes oldest version when exceeding 20', async () => {
+    mockPrisma.diagram.update.mockResolvedValue({ saveCount: 10 }); // 10th save
+    mockPrisma.diagramVersion.count.mockResolvedValue(20); // already at max — new one will exceed
+    mockPrisma.diagramVersion.create.mockResolvedValue({});
+    mockPrisma.diagramVersion.findMany.mockResolvedValue([{ id: 'old-v' }]);
 
     await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
-    expect(mockPrisma.diagramVersion.deleteMany).toHaveBeenCalled();
+    expect(mockPrisma.diagramVersion.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ['old-v'] } },
+    });
   });
 });
 
