@@ -31,7 +31,7 @@ const DEBOUNCE_MS = 1500;
 
 export function useCanvas(diagramId: string): UseCanvasReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DiagramNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [diagramName, setDiagramName] = useState('Untitled Diagram');
   const { getViewport } = useReactFlow();

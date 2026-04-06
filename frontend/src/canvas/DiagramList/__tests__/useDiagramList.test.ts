@@ -38,7 +38,7 @@ describe('useDiagramList', () => {
 
   it('creates a new diagram and refreshes list', async () => {
     mockApi.listDiagrams.mockResolvedValue(mockDiagrams);
-    mockApi.createDiagram.mockResolvedValue({ id: '3', name: 'New Diagram' });
+    mockApi.createDiagram.mockResolvedValue({ id: '3', name: 'New Diagram', nodes: [], edges: [], createdAt: '2026-04-03T00:00:00Z', updatedAt: '2026-04-03T00:00:00Z' });
 
     const { result } = renderHook(() => useDiagramList());
     await act(async () => {

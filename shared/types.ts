@@ -15,6 +15,7 @@ export interface DiagramNodeData {
   technology?: string;
   color?: string;
   customNodeTypeId?: string;
+  [key: string]: unknown;
 }
 
 export interface DiagramNodeRaw {
