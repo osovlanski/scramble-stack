@@ -1,33 +1,18 @@
-/**
- * Database Service - Prisma Client Singleton
- *
- * Provides a single instance of PrismaClient for the entire application.
- * Handles connection management, logging, and graceful shutdown.
- *
- * Note: Prisma 7+ requires an adapter for direct database connections
- */
-
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import logger from './logger';
 
-// Lazy initialization variables
 let pool: pg.Pool | null = null;
 let adapter: PrismaPg | null = null;
 let prismaInstance: PrismaClient | null = null;
 let initialized = false;
 
-// Declare global type for PrismaClient singleton
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
-/**
- * Initialize the database connection lazily
- * Called during app startup after dotenv is loaded
- */
 const initializePrisma = (): PrismaClient | null => {
   if (initialized) return prismaInstance;
   initialized = true;
@@ -39,333 +24,58 @@ const initializePrisma = (): PrismaClient | null => {
   }
 
   try {
-    // Create PostgreSQL pool
     pool = new pg.Pool({ connectionString: databaseUrl });
-
-    // Create Prisma adapter
     adapter = new PrismaPg(pool);
 
-    // Create PrismaClient with adapter
     prismaInstance = globalThis.prisma ?? new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === 'development'
         ? ['query', 'info', 'warn', 'error']
-        : ['error']
+        : ['error'],
     });
 
     if (process.env.NODE_ENV !== 'production') {
       globalThis.prisma = prismaInstance;
     }
 
-    logger.success('Prisma client initialized with pg adapter');
+    logger.success('Prisma client initialized');
     return prismaInstance;
   } catch (error) {
-    logger.fail('Failed to initialize Prisma client', { error: error instanceof Error ? error.message : String(error) });
+    logger.fail('Failed to initialize Prisma client', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 };
 
-// Export getter for prisma client (lazily initialized)
 export const getPrisma = (): PrismaClient | null => {
-  if (!initialized) {
-    initializePrisma();
-  }
+  if (!initialized) initializePrisma();
   return prismaInstance;
 };
 
-// Legacy export for backwards compatibility
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_, prop) {
-    const client = getPrisma();
-    if (!client) {
-      throw new Error('Database not initialized. Call databaseService.connect() first.');
-    }
-    return (client as any)[prop];
-  }
-});
-
-/**
- * Database service with helper methods
- */
 export const databaseService = {
-  /**
-   * Check if database is configured
-   */
   isConfigured: () => {
     if (!initialized) initializePrisma();
     return !!prismaInstance;
   },
 
-  /**
-   * Get Prisma client instance
-   */
-  getClient: () => getPrisma(),
-
-  /**
-   * Check database connection health
-   */
-  healthCheck: async (): Promise<boolean> => {
-    const client = getPrisma();
-    if (!client) return false;
-    try {
-      await client.$queryRaw`SELECT 1`;
-      return true;
-    } catch (error) {
-      logger.fail('Database health check failed', { error: error instanceof Error ? error.message : String(error) });
-      return false;
-    }
-  },
-
-  /**
-   * Connect to database (called on app startup)
-   */
   connect: async (): Promise<void> => {
-    // Initialize prisma lazily
-    const client = initializePrisma();
-    if (!client) {
-      logger.skip('Database not configured, skipping connection');
-      return;
-    }
-    try {
-      await client.$connect();
-      logger.connect('Database connected successfully');
-    } catch (error) {
-      logger.fail('Failed to connect to database', { error: error instanceof Error ? error.message : String(error) });
-      throw error;
+    initializePrisma();
+    if (prismaInstance) {
+      await prismaInstance.$connect();
+      logger.db('Database connected');
     }
   },
 
-  /**
-   * Disconnect from database (called on app shutdown)
-   */
   disconnect: async (): Promise<void> => {
-    if (!prismaInstance) return;
-    try {
+    if (prismaInstance) {
       await prismaInstance.$disconnect();
-      if (pool) await pool.end();
-      logger.disconnect('Database disconnected gracefully');
-    } catch (error) {
-      logger.fail('Error disconnecting from database', { error: error instanceof Error ? error.message : String(error) });
+      logger.disconnect('Database disconnected');
+    }
+    if (pool) {
+      await pool.end();
     }
   },
-
-  /**
-   * Get or create default user (for single-user mode)
-   * Uses ADMIN_EMAIL env var or defaults to itayosov@gmail.com
-   */
-  getDefaultUser: async () => {
-    const client = getPrisma();
-    if (!client) return null;
-
-    const defaultEmail = process.env.ADMIN_EMAIL || process.env.DEFAULT_USER_EMAIL || 'itayosov@gmail.com';
-
-    let user = await client.user.findUnique({
-      where: { email: defaultEmail },
-      include: { preferences: true }
-    });
-
-    if (!user) {
-      user = await client.user.create({
-        data: {
-          email: defaultEmail,
-          name: 'Admin',
-          role: 'SUPER_ADMIN',
-          status: 'ACTIVE',
-          isVerified: true,
-          verifiedAt: new Date(),
-          preferences: {
-            create: {
-              preferredLanguage: 'javascript',
-              preferredJobTypes: ['Remote', 'Hybrid'],
-              preferredLocations: [],
-              preferredCompanies: [],
-              preferredAirlines: [],
-              completedLists: [],
-              favoriteCategories: [],
-              favoriteBrands: []
-            }
-          }
-        },
-        include: { preferences: true }
-      });
-      logger.success('Created admin user', { email: defaultEmail });
-    }
-
-    return user;
-  },
-
-  /**
-   * Get user by email
-   */
-  getUserByEmail: async (email: string) => {
-    const client = getPrisma();
-    if (!client) return null;
-
-    return client.user.findUnique({
-      where: { email: email.toLowerCase() },
-      include: { preferences: true }
-    });
-  },
-
-  /**
-   * Get or create user by email
-   * Creates user with default preferences if not found
-   */
-  getOrCreateUser: async (email: string) => {
-    const client = getPrisma();
-    if (!client) return null;
-
-    const normalizedEmail = email.toLowerCase();
-
-    // Try to find existing user
-    let user = await client.user.findUnique({
-      where: { email: normalizedEmail },
-      include: { preferences: true }
-    });
-
-    if (!user) {
-      // Create new user with default preferences
-      user = await client.user.create({
-        data: {
-          email: normalizedEmail,
-          name: normalizedEmail.split('@')[0],
-          role: 'USER',
-          status: 'ACTIVE',
-          isVerified: true,
-          verifiedAt: new Date(),
-          preferences: {
-            create: {
-              preferredLanguage: 'javascript',
-              preferredJobTypes: ['Remote', 'Hybrid'],
-              preferredLocations: [],
-              preferredCompanies: [],
-              preferredAirlines: [],
-              completedLists: [],
-              favoriteCategories: [],
-              favoriteBrands: []
-            }
-          }
-        },
-        include: { preferences: true }
-      });
-      logger.success('Created new user', { email: normalizedEmail });
-    }
-
-    return user;
-  },
-
-  /**
-   * Check if user is admin
-   */
-  isAdmin: async (userId: string): Promise<boolean> => {
-    const client = getPrisma();
-    if (!client) return false;
-
-    const user = await client.user.findUnique({
-      where: { id: userId },
-      select: { role: true }
-    });
-
-    return user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-  },
-
-  /**
-   * Log activity to database
-   */
-  logActivity: async (params: {
-    userId?: string;
-    agent: string;
-    action: string;
-    details?: string;
-    metadata?: Record<string, unknown>;
-    status?: 'success' | 'error' | 'warning';
-    error?: string;
-  }) => {
-    const client = getPrisma();
-    if (!client) return;
-
-    try {
-      await client.activityLog.create({
-        data: {
-          userId: params.userId,
-          agent: params.agent,
-          action: params.action,
-          details: params.details,
-          metadata: params.metadata as any,
-          status: params.status || 'success',
-          error: params.error
-        }
-      });
-    } catch (error) {
-      logger.fail('Failed to log activity', { error: error instanceof Error ? error.message : String(error) });
-    }
-  },
-
-  /**
-   * Get app configuration value
-   */
-  getConfig: async <T>(key: string, defaultValue?: T): Promise<T | undefined> => {
-    const client = getPrisma();
-    if (!client) return defaultValue;
-
-    const config = await client.appConfig.findUnique({
-      where: { id: key }
-    });
-    return config?.value as T ?? defaultValue;
-  },
-
-  /**
-   * Set app configuration value
-   */
-  setConfig: async <T>(key: string, value: T, category?: string): Promise<void> => {
-    const client = getPrisma();
-    if (!client) return;
-
-    await client.appConfig.upsert({
-      where: { id: key },
-      update: { value: value as object, category },
-      create: { id: key, value: value as object, category }
-    });
-  },
-
-  /**
-   * Find user by ID
-   */
-  findUserById: async (userId: string) => {
-    const client = getPrisma();
-    if (!client) return null;
-
-    return client.user.findUnique({
-      where: { id: userId },
-      include: { preferences: true }
-    });
-  },
-
-  /**
-   * Find user by session token
-   * For now, treats token as user email or ID (simple session)
-   * In production, implement proper JWT validation
-   */
-  findUserByToken: async (token: string) => {
-    const client = getPrisma();
-    if (!client) return null;
-
-    try {
-      const user = await client.user.findFirst({
-        where: {
-          OR: [
-            { email: token },
-            { id: token }
-          ]
-        },
-        include: { preferences: true }
-      });
-
-      return user;
-    } catch {
-      return null;
-    }
-  }
 };
 
 export default databaseService;

@@ -26,7 +26,9 @@ class ClaudeService {
 
     this.client = new Anthropic({
       apiKey,
-      httpAgent: new https.Agent({ rejectUnauthorized: false }),
+      httpAgent: process.env.NODE_ENV !== 'production'
+        ? new https.Agent({ rejectUnauthorized: false })
+        : undefined,
     });
   }
 
@@ -54,6 +56,44 @@ class ClaudeService {
     });
     const block = response.content.find(b => b.type === 'text');
     return { content: block?.type === 'text' ? block.text : '' };
+  }
+
+  async analyzeImage(
+    base64Image: string,
+    prompt: string,
+    mimeType: string = 'image/jpeg',
+    maxTokens = 2000
+  ): Promise<string> {
+    this.initializeClient();
+
+    const validMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validMimeTypes.includes(mimeType)) {
+      throw new Error(`Invalid mime type: ${mimeType}`);
+    }
+
+    const message = await this.client!.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+                data: base64Image,
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        },
+      ],
+    });
+
+    const block = message.content.find(b => b.type === 'text');
+    return block?.type === 'text' ? block.text : '';
   }
 
   async generateDiagram(prompt: string): Promise<GenerateDiagramResponse> {
@@ -94,9 +134,9 @@ Layout rules:
 - Start x at 100, use 250px horizontal spacing between nodes at the same y level
 - Center nodes by layer: if 3 services, center them around x=400`;
 
-    const response = await this.generateText(
-      `${systemPrompt}\n\nDesign prompt: ${prompt}`,
-      4000
+    const { content: response } = await this.chat(
+      [{ role: 'user', content: `Design prompt: ${prompt}` }],
+      { system: systemPrompt, maxTokens: 4000 }
     );
 
     const clean = response.replace(/```json|```/g, '').trim();

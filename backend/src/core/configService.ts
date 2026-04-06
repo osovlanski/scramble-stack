@@ -15,8 +15,6 @@ const DEFAULT_CONFIG = {
 type ConfigKey = keyof typeof DEFAULT_CONFIG;
 type ConfigValue = string | number | boolean;
 
-const configCache: Map<string, unknown> = new Map();
-
 export const configService = {
   init: async (): Promise<void> => {
     logger.success('Config service initialized');
@@ -31,8 +29,6 @@ export const configService = {
       if (!isNaN(Number(envValue))) return Number(envValue) as T;
       return envValue as T;
     }
-    const dbValue = configCache.get(key);
-    if (dbValue !== undefined) return dbValue as T;
     return (defaultValue ?? DEFAULT_CONFIG[key]) as T;
   },
 };

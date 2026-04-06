@@ -173,6 +173,15 @@ export const cacheService = {
     if (tag === '*') {
       invalidatedCount = memoryCache.keys().length;
       memoryCache.flushAll();
+      if (redisAvailable && redisClient) {
+        try {
+          await redisClient.flushdb();
+        } catch (error) {
+          logger.warn('Redis flush error during invalidateByTag(*)', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
     }
 
     // Clear Redis keys by tag
