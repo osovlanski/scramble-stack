@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -61,4 +62,5 @@ model CustomNodeType {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, name])
+  @@index([userId])
 }

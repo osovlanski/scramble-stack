@@ -77,3 +77,11 @@ export interface ApiResponse<T> {
   data?: T;
   message?: string;
 }
+
+export interface SaveDiagramPayload {
+  name: string;
+  nodes: DiagramNodeRaw[];
+  edges: DiagramEdgeRaw[];
+  viewport: { x: number; y: number; zoom: number } | null;
+  thumbnail: string | null;
+}
