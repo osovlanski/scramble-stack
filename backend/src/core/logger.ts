@@ -231,6 +231,9 @@ const logger = {
   agent: (message: string, metadata?: Record<string, unknown>): void => {
     getLogger().info(`${ICONS.agent} ${message}`, metadata);
   },
+  canvas: (message: string, metadata?: Record<string, unknown>): void => {
+    getLogger().info(`${ICONS.canvas} ${message}`, metadata);
+  },
 
   // Flexible icon method
   withIcon: (
