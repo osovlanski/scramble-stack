@@ -4,7 +4,7 @@ import type { NodeType } from '@shared/types';
 
 interface PaletteCategoryProps {
   name: string;
-  nodes: ReadonlyArray<{ type: string; label: string }>;
+  nodes: ReadonlyArray<{ type: string; label: string; icon?: string }>;
 }
 
 export default function PaletteCategory({ name, nodes }: PaletteCategoryProps) {
@@ -22,7 +22,7 @@ export default function PaletteCategory({ name, nodes }: PaletteCategoryProps) {
       {open && (
         <div className="flex flex-col gap-1 mt-1">
           {nodes.map(node => (
-            <PaletteItem key={node.type} type={node.type as NodeType} label={node.label} />
+            <PaletteItem key={node.type} type={node.type as NodeType} label={node.label} icon={node.icon} />
           ))}
         </div>
       )}

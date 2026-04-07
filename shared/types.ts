@@ -6,6 +6,7 @@ export type NodeType =
   | 'client-web' | 'client-mobile' | 'third-party-api' | 'telegram-bot'
   | 'cloud-region' | 'availability-zone'
   | 'rate-limiter' | 'api-gateway' | 'service-mesh'
+  | 'text' | 'sticky-note' | 'rectangle' | 'ellipse'
   | 'custom';
 
 export interface DiagramNodeData {

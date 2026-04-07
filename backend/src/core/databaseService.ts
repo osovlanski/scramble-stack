@@ -24,10 +24,28 @@ const initializePrisma = (): PrismaClient | null => {
   }
 
   try {
-    pool = new pg.Pool({ connectionString: databaseUrl });
+    const isRemote = !databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1');
+    pool = new pg.Pool({
+      connectionString: databaseUrl,
+      ssl: isRemote ? { rejectUnauthorized: false } : false,
+      max: 10,
+      idleTimeoutMillis: 20000,
+      connectionTimeoutMillis: 5000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
+    });
+
+    // Reset state on pool error so the next request re-initializes cleanly
+    pool.on('error', (err) => {
+      logger.fail('Database pool error — will reconnect on next request', { error: err.message });
+      initialized = false;
+      prismaInstance = null;
+      globalThis.prisma = undefined;
+    });
+
     adapter = new PrismaPg(pool);
 
-    prismaInstance = globalThis.prisma ?? new PrismaClient({
+    prismaInstance = new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === 'development'
         ? ['query', 'info', 'warn', 'error']

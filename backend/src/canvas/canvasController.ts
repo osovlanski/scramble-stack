@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import type { DiagramNodeRaw, DiagramEdgeRaw } from '@shared/types';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { diagramService } from './services/diagramService';
 import { aiGeneratorService } from './services/aiGeneratorService';
@@ -44,7 +45,7 @@ export const canvasController = {
 
   async saveDiagram(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { name, nodes, edges, viewport, thumbnail } = req.body as { name: string; nodes: unknown[]; edges: unknown[]; viewport: unknown; thumbnail: string | null };
+      const { name, nodes, edges, viewport, thumbnail } = req.body as { name: string; nodes: DiagramNodeRaw[]; edges: DiagramEdgeRaw[]; viewport: unknown; thumbnail: string | null };
       await diagramService.save(req.params.id as string, req.userId, { name, nodes, edges, viewport: viewport as any, thumbnail });
       res.json({ success: true });
     } catch (error) {

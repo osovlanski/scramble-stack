@@ -8,6 +8,8 @@ import {
   type Node,
   type OnConnect,
   addEdge,
+  MarkerType,
+  ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { NODE_TYPES } from '../NodeTypes';
@@ -31,8 +33,15 @@ function CanvasBoardInner() {
   const [showAI, setShowAI] = useState(false);
   const [showCustomManager, setShowCustomManager] = useState(false);
 
+  const defaultEdgeOptions = {
+    type: 'smoothstep',
+    animated: false,
+    style: { stroke: '#6366f1', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' },
+  };
+
   const onConnect: OnConnect = useCallback(
-    params => setEdges(eds => addEdge(params, eds)),
+    params => setEdges(eds => addEdge({ ...params, ...defaultEdgeOptions }, eds)),
     [setEdges]
   );
 
@@ -94,6 +103,12 @@ function CanvasBoardInner() {
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             nodeTypes={NODE_TYPES}
+            defaultEdgeOptions={defaultEdgeOptions}
+            connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 2 }}
+            connectionLineType={ConnectionLineType.SmoothStep}
+            selectionOnDrag
+            multiSelectionKeyCode="Meta"
+            deleteKeyCode="Backspace"
             fitView
           >
             <Background color="#1e293b" gap={24} />
