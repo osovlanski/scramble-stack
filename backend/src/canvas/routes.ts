@@ -13,7 +13,7 @@ router.put('/diagrams/:id', (req, res) => canvasController.saveDiagram(req as an
 router.delete('/diagrams/:id', (req, res) => canvasController.deleteDiagram(req as any, res));
 
 router.get('/diagrams/:id/versions', (req, res) => canvasController.listVersions(req as any, res));
-router.get('/diagrams/:id/versions/:ver', (req, res) => canvasController.restoreVersion(req as any, res));
+router.post('/diagrams/:id/versions/:ver/restore', (req, res) => canvasController.restoreVersion(req as any, res));
 
 router.post('/generate', (req, res) => canvasController.generateDiagram(req as any, res));
 router.post('/diagrams/:id/export', (req, res) => canvasController.exportDiagram(req as any, res));

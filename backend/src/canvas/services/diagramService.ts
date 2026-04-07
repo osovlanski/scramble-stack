@@ -71,11 +71,11 @@ export const diagramService = {
     };
   },
 
-  async save(id: string, payload: SaveDiagramPayload): Promise<void> {
+  async save(id: string, userId: string, payload: SaveDiagramPayload): Promise<void> {
     const prisma = getPrisma()!;
 
     const updated = await prisma.diagram.update({
-      where: { id },
+      where: { id, userId },
       data: {
         name: payload.name,
         nodes: payload.nodes as unknown as JsonArray,
@@ -120,8 +120,10 @@ export const diagramService = {
     await prisma.diagram.delete({ where: { id, userId } });
   },
 
-  async listVersions(diagramId: string): Promise<DiagramVersionMeta[]> {
+  async listVersions(diagramId: string, userId: string): Promise<DiagramVersionMeta[]> {
     const prisma = getPrisma()!;
+    const diagram = await prisma.diagram.findFirst({ where: { id: diagramId, userId } });
+    if (!diagram) throw new Error('Diagram not found');
     const versions = await prisma.diagramVersion.findMany({
       where: { diagramId },
       orderBy: { version: 'desc' },
@@ -135,8 +137,10 @@ export const diagramService = {
     }));
   },
 
-  async restore(diagramId: string, version: number): Promise<void> {
+  async restore(diagramId: string, version: number, userId: string): Promise<void> {
     const prisma = getPrisma()!;
+    const diagram = await prisma.diagram.findFirst({ where: { id: diagramId, userId } });
+    if (!diagram) throw new Error('Diagram not found');
     const snapshot = await prisma.diagramVersion.findFirst({
       where: { diagramId, version },
     });

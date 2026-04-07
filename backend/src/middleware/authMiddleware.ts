@@ -24,7 +24,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   }
 
   try {
-    const payload = jwt.verify(token, secret) as { userId: string };
+    const payload = jwt.verify(token, secret) as { userId?: string };
+    if (!payload.userId || typeof payload.userId !== 'string') {
+      res.status(401).json({ success: false, message: 'Invalid token payload' });
+      return;
+    }
     (req as AuthRequest).userId = payload.userId;
     next();
   } catch {

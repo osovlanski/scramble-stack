@@ -49,7 +49,7 @@ describe('diagramService.save', () => {
     mockPrisma.diagramVersion.count.mockResolvedValue(0);
     mockPrisma.diagramVersion.create.mockResolvedValue({});
 
-    await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
+    await diagramService.save('diag-1', 'user-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
     expect(mockPrisma.diagramVersion.create).toHaveBeenCalled();
   });
@@ -57,7 +57,7 @@ describe('diagramService.save', () => {
   it('does not create version on non-10th saves', async () => {
     mockPrisma.diagram.update.mockResolvedValue({ saveCount: 3 }); // not a 10th save
 
-    await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
+    await diagramService.save('diag-1', 'user-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
     expect(mockPrisma.diagramVersion.create).not.toHaveBeenCalled();
   });
@@ -68,7 +68,7 @@ describe('diagramService.save', () => {
     mockPrisma.diagramVersion.create.mockResolvedValue({});
     mockPrisma.diagramVersion.findMany.mockResolvedValue([{ id: 'old-v' }]);
 
-    await diagramService.save('diag-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
+    await diagramService.save('diag-1', 'user-1', { nodes: mockNodes, edges: mockEdges, viewport: null, thumbnail: null, name: 'Test' });
 
     expect(mockPrisma.diagramVersion.deleteMany).toHaveBeenCalledWith({
       where: { id: { in: ['old-v'] } },
@@ -79,10 +79,11 @@ describe('diagramService.save', () => {
 describe('diagramService.restore', () => {
   it('replaces diagram nodes and edges with version snapshot', async () => {
     const version = { id: 'v1', nodes: mockNodes, edges: mockEdges };
+    mockPrisma.diagram.findFirst.mockResolvedValue(mockDiagram); // ownership check
     mockPrisma.diagramVersion.findFirst.mockResolvedValue(version);
     mockPrisma.diagram.update.mockResolvedValue(mockDiagram);
 
-    await diagramService.restore('diag-1', 5);
+    await diagramService.restore('diag-1', 5, 'user-1');
 
     expect(mockPrisma.diagram.update).toHaveBeenCalledWith({
       where: { id: 'diag-1' },
@@ -91,7 +92,13 @@ describe('diagramService.restore', () => {
   });
 
   it('throws if version not found', async () => {
+    mockPrisma.diagram.findFirst.mockResolvedValue(mockDiagram); // ownership check passes
     mockPrisma.diagramVersion.findFirst.mockResolvedValue(null);
-    await expect(diagramService.restore('diag-1', 99)).rejects.toThrow('Version 99 not found');
+    await expect(diagramService.restore('diag-1', 99, 'user-1')).rejects.toThrow('Version 99 not found');
+  });
+
+  it('throws if diagram does not belong to user', async () => {
+    mockPrisma.diagram.findFirst.mockResolvedValue(null); // ownership check fails
+    await expect(diagramService.restore('diag-1', 5, 'other-user')).rejects.toThrow('Diagram not found');
   });
 });

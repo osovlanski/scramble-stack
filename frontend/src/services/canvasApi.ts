@@ -44,7 +44,7 @@ export const canvasApi = {
   deleteDiagram: (id: string) => request<void>(`/diagrams/${id}`, { method: 'DELETE' }),
 
   listVersions: (id: string) => request<DiagramVersionMeta[]>(`/diagrams/${id}/versions`),
-  restoreVersion: (id: string, ver: number) => request<DiagramFull>(`/diagrams/${id}/versions/${ver}`),
+  restoreVersion: (id: string, ver: number) => request<DiagramFull>(`/diagrams/${id}/versions/${ver}/restore`, { method: 'POST' }),
 
   exportDiagram: (id: string) => request<GenerateDiagramResponse>(`/diagrams/${id}/export`),
 
@@ -69,7 +69,12 @@ export const canvasApi = {
       signal,
     });
 
-    const reader = response.body!.getReader();
+    if (!response.ok || !response.body) {
+      onError(`Server error: ${response.status}`);
+      return;
+    }
+
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 

@@ -44,7 +44,8 @@ export const canvasController = {
 
   async saveDiagram(req: AuthRequest, res: Response): Promise<void> {
     try {
-      await diagramService.save(req.params.id as string, req.body);
+      const { name, nodes, edges, viewport, thumbnail } = req.body as { name: string; nodes: unknown[]; edges: unknown[]; viewport: unknown; thumbnail: string | null };
+      await diagramService.save(req.params.id as string, req.userId, { name, nodes, edges, viewport: viewport as any, thumbnail });
       res.json({ success: true });
     } catch (error) {
       logger.fail('Failed to save diagram', { error });
@@ -64,7 +65,7 @@ export const canvasController = {
 
   async listVersions(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const versions = await diagramService.listVersions(req.params.id as string);
+      const versions = await diagramService.listVersions(req.params.id as string, req.userId);
       res.json({ success: true, data: versions });
     } catch (error) {
       logger.fail('Failed to list versions', { error });
@@ -75,7 +76,7 @@ export const canvasController = {
   async restoreVersion(req: AuthRequest, res: Response): Promise<void> {
     try {
       const version = parseInt(req.params.ver as string, 10);
-      await diagramService.restore(req.params.id as string, version);
+      await diagramService.restore(req.params.id as string, version, req.userId);
       const diagram = await diagramService.get(req.params.id as string, req.userId);
       res.json({ success: true, data: diagram });
     } catch (error) {
