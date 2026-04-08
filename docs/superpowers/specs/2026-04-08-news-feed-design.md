@@ -2,13 +2,16 @@
 
 **Date:** 2026-04-08  
 **Status:** Approved  
-**Scope:** New `news-feed/` workspace inside the scramble-stack monorepo
+**Scope:** Monorepo restructure to `apps/` layout + new `apps/news-feed/` workspace
 
 ---
 
 ## Overview
 
-A personal tech news feed that ingests articles from multiple sources, enriches them with a Claude "principal tech architect" persona (summary, theme tags, signal rating, adopt/watch/avoid action), and presents them as a scrollable live feed and a daily digest. Single-user, no auth required.
+Two things happen in this implementation:
+
+1. **Monorepo restructure** — App A (`backend/`, `frontend/`) moves to `apps/canvas/` to establish a consistent per-app layout that scales to App B, App C, and beyond.
+2. **App B: Tech News Feed** — a personal tech news feed that ingests articles from multiple sources, enriches them with a Claude "principal tech architect" persona (summary, theme tags, signal rating, adopt/watch/avoid action), and presents them as a scrollable live feed and a daily digest. Single-user, no auth required.
 
 ---
 
@@ -51,42 +54,62 @@ Express :3001
   POST /articles/:id/interact     — record explicit feedback (thumb_up/down/skip)
 ```
 
-### Workspace Structure
+### Monorepo Restructure
+
+Before building App B, App A moves into the `apps/` layout:
+
+```
+# Before                    # After
+backend/          →         apps/canvas/backend/
+frontend/         →         apps/canvas/frontend/
+shared/           →         shared/               (unchanged)
+```
+
+Root `package.json` workspaces changes from `["backend", "frontend", "shared"]` to `["apps/*/*", "shared"]`.
+
+CI/CD paths, Railway config (`backend/railway.json` → `apps/canvas/backend/railway.json`), and Vercel config (`frontend/vercel.json` → `apps/canvas/frontend/vercel.json`) are updated to match.
+
+### Final Workspace Structure
 
 ```
 scramble-stack/
-├── shared/
-├── backend/               ← canvas app (unchanged)
-├── frontend/              ← canvas app (unchanged)
-└── news-feed/
-    ├── backend/
-    │   ├── src/
-    │   │   ├── sources/
-    │   │   │   ├── fetcherRegistry.ts     ← maps source type → fetcher
-    │   │   │   ├── rssFetcher.ts          ← Calcalist, GeekTime, any RSS
-    │   │   │   ├── redditFetcher.ts       ← ported from pocketknife
-    │   │   │   └── rsshubFetcher.ts       ← Telegram channels + TikTok
-    │   │   ├── curator/
-    │   │   │   └── curatorService.ts      ← Claude tech-architect persona
-    │   │   ├── personalization/
-    │   │   │   ├── interactionTracker.ts  ← records explicit + implicit events
-    │   │   │   ├── preferenceAgent.ts     ← Claude agent that builds preference profile
-    │   │   │   └── ranker.ts              ← applies profile weights → personalScore
-    │   │   ├── digest/
-    │   │   │   └── digestService.ts       ← daily briefing + scheduler
-    │   │   ├── api/
-    │   │   │   ├── feedController.ts
-    │   │   │   └── routes.ts
-    │   │   └── index.ts
-    │   ├── sources.config.ts              ← user-defined source list
-    │   └── package.json
-    └── frontend/
-        ├── src/
-        │   ├── Feed/                      ← live scrollable feed + interaction controls
-        │   ├── Digest/                    ← daily briefing view
-        │   └── App.tsx
-        └── package.json
+├── apps/
+│   ├── canvas/
+│   │   ├── backend/               ← App A backend (port 3000) — moved, unchanged
+│   │   └── frontend/              ← App A frontend (port 5173) — moved, unchanged
+│   └── news-feed/
+│       ├── backend/
+│       │   ├── src/
+│       │   │   ├── sources/
+│       │   │   │   ├── fetcherRegistry.ts     ← maps source type → fetcher
+│       │   │   │   ├── rssFetcher.ts          ← Calcalist, GeekTime, any RSS
+│       │   │   │   ├── redditFetcher.ts       ← ported from pocketknife
+│       │   │   │   └── rsshubFetcher.ts       ← Telegram channels + TikTok
+│       │   │   ├── curator/
+│       │   │   │   └── curatorService.ts      ← Claude tech-architect persona
+│       │   │   ├── personalization/
+│       │   │   │   ├── interactionTracker.ts  ← records explicit + implicit events
+│       │   │   │   ├── preferenceAgent.ts     ← Claude agent, builds preference profile
+│       │   │   │   └── ranker.ts              ← weights → personalScore
+│       │   │   ├── digest/
+│       │   │   │   └── digestService.ts       ← daily briefing + scheduler
+│       │   │   ├── api/
+│       │   │   │   ├── feedController.ts
+│       │   │   │   └── routes.ts
+│       │   │   └── index.ts
+│       │   ├── sources.config.ts              ← user-defined source list
+│       │   └── package.json
+│       └── frontend/
+│           ├── src/
+│           │   ├── Feed/                      ← live scrollable feed + interaction controls
+│           │   ├── Digest/                    ← daily briefing view
+│           │   └── App.tsx
+│           └── package.json
+├── shared/                                    ← shared types (all apps)
+└── package.json                               ← workspaces: ["apps/*/*", "shared"]
 ```
+
+App C will slot in as `apps/system-design/` with no root changes needed.
 
 ---
 
