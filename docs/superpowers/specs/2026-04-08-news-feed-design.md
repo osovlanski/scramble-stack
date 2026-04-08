@@ -36,14 +36,19 @@ CuratorService → Claude (tech-architect persona) → enriched articles
   • insight     — why this matters for system design / architecture
   • curatedAt   — timestamp
 
+── PERSONALIZATION (continuous + weekly) ────────────────────
+InteractionTracker → ArticleInteraction events in DB
+PreferenceAgent (weekly + post-digest) → UserPreferenceProfile JSON
+
 ── DIGEST (daily at 07:00, configurable) ────────────────────
-DigestScheduler → top-10 articles → Claude briefing → DigestRecord in DB
+DigestScheduler → top-10 by personalScore → Claude briefing → DigestRecord in DB
 
 ── API ───────────────────────────────────────────────────────
 Express :3001
-  GET  /feed               — paginated articles, filterable by theme/signal
-  GET  /digest             — today's digest (or ?date=YYYY-MM-DD for past)
-  POST /sources/refresh    — manual trigger
+  GET  /feed                      — paginated, filterable, ordered by personalScore
+  GET  /digest                    — today's digest (or ?date=YYYY-MM-DD for past)
+  POST /sources/refresh           — manual trigger
+  POST /articles/:id/interact     — record explicit feedback (thumb_up/down/skip)
 ```
 
 ### Workspace Structure
@@ -63,6 +68,10 @@ scramble-stack/
     │   │   │   └── rsshubFetcher.ts       ← Telegram channels + TikTok
     │   │   ├── curator/
     │   │   │   └── curatorService.ts      ← Claude tech-architect persona
+    │   │   ├── personalization/
+    │   │   │   ├── interactionTracker.ts  ← records explicit + implicit events
+    │   │   │   ├── preferenceAgent.ts     ← Claude agent that builds preference profile
+    │   │   │   └── ranker.ts              ← applies profile weights → personalScore
     │   │   ├── digest/
     │   │   │   └── digestService.ts       ← daily briefing + scheduler
     │   │   ├── api/
@@ -73,7 +82,7 @@ scramble-stack/
     │   └── package.json
     └── frontend/
         ├── src/
-        │   ├── Feed/                      ← live scrollable feed
+        │   ├── Feed/                      ← live scrollable feed + interaction controls
         │   ├── Digest/                    ← daily briefing view
         │   └── App.tsx
         └── package.json
@@ -143,6 +152,88 @@ interface EnrichedArticle {
 
 ---
 
+## Personalization Layer
+
+### Interaction Tracking
+
+Every article interaction is recorded as an event. Two types:
+
+**Explicit** (user-triggered UI actions):
+- `thumb_up` — user liked the article
+- `thumb_down` — user disliked the article
+- `skip` — user dismissed without reading
+- `not_for_me` — stronger signal than skip; suppress similar articles
+
+**Implicit** (behavioral, tracked client-side):
+- `view` — user opened/expanded the article
+- `dwell_ms` — milliseconds spent on the article (sent on close/blur)
+- `click_from_digest` — opened from the digest view (higher intent signal than feed browsing)
+
+```typescript
+interface ArticleInteraction {
+  id: string;
+  articleId: string;
+  type: 'thumb_up' | 'thumb_down' | 'skip' | 'not_for_me' | 'view' | 'dwell' | 'click_from_digest';
+  value?: number;   // dwell_ms for 'dwell', otherwise null
+  recordedAt: Date;
+}
+```
+
+### Preference Agent
+
+A Claude agent that runs **weekly** and **after each digest session**. It reads the last N interaction events and produces a `UserPreferenceProfile`:
+
+```typescript
+interface UserPreferenceProfile {
+  themeWeights: Record<Theme, number>;    // e.g. { infra: 1.4, tooling: 0.6 }
+  signalWeights: Record<Signal, number>;  // e.g. { real: 1.5, hype: 0.8, noise: 0.2 }
+  actionWeights: Record<Action, number>;  // e.g. { adopt: 1.3, watch: 1.0, avoid: 0.7 }
+  sourceWeights: Record<string, number>;  // e.g. { geektime: 1.2, 'reddit-eng': 1.0 }
+  summary: string;   // natural-language description of learned patterns
+  updatedAt: Date;
+}
+```
+
+The agent prompt instructs Claude to:
+- Infer weights from engagement patterns (high dwell + thumb_up = strong positive signal)
+- Note topic fatigue (many skips on a theme → reduce weight)
+- Write a concise `summary` describing observed preferences in plain English
+
+The profile is stored as a single JSON row in the DB — human-readable and editable.
+
+### Re-ranking
+
+After curation, each article receives a `personalScore`:
+
+```
+personalScore = base_score
+  × themeWeights[article.themes[0]]
+  × signalWeights[article.signal]
+  × actionWeights[article.action ?? 'watch']
+  × sourceWeights[article.source]
+```
+
+`base_score` is 1.0 for new articles; adjusted by recency (articles older than 24h get a small decay).
+
+Feed ordering and digest top-10 selection both use `personalScore`.
+
+### Curator Injection
+
+The preference profile's `summary` field is appended to the curator prompt:
+
+> "…additionally, this user's reading patterns show: [summary]. Weight your signal and action recommendations accordingly."
+
+This means Claude curates *with the user's interests in mind*, not just re-ranks afterwards.
+
+### UI Controls
+
+Each article card exposes interaction controls (visible on hover):
+- `↑` thumb up / `↓` thumb down — explicit preference signal
+- `✕` skip — dismiss from feed
+- Dwell time tracked automatically when article is expanded
+
+---
+
 ## Frontend
 
 ### Routes
@@ -189,8 +280,10 @@ interface EnrichedArticle {
 SQLite (via Prisma) for simplicity — single-user, no concurrency concerns.
 
 **Tables:**
-- `Article` — raw + enriched fields, unique on `url`
+- `Article` — raw + enriched fields + `personalScore`, unique on `url`
 - `Digest` — date, briefingText, articleIds (JSON array)
+- `ArticleInteraction` — one row per interaction event (explicit + implicit)
+- `UserPreferenceProfile` — single row, JSON blob, updated by PreferenceAgent
 
 ---
 
@@ -198,6 +291,6 @@ SQLite (via Prisma) for simplicity — single-user, no concurrency concerns.
 
 - Multi-user / auth
 - Push notifications
-- Article bookmarking / read tracking
+- Article bookmarking
 - Telegram bot output (may be added later)
 - Self-hosted RSSHub instance
