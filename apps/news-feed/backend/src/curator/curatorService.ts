@@ -18,9 +18,13 @@ Respond ONLY with a JSON array — no markdown, no explanation:
 async function getCuratorSystem(): Promise<string> {
   const row = await prisma.userPreferenceProfile.findUnique({ where: { id: 1 } });
   if (!row) return BASE_CURATOR_SYSTEM;
-  const profile: UserPreferenceProfile = JSON.parse(row.profileJson);
-  if (!profile.summary) return BASE_CURATOR_SYSTEM;
-  return `${BASE_CURATOR_SYSTEM}\n\nUser context: ${profile.summary} Weight your signal and action recommendations accordingly.`;
+  try {
+    const profile: UserPreferenceProfile = JSON.parse(row.profileJson);
+    if (!profile.summary) return BASE_CURATOR_SYSTEM;
+    return `${BASE_CURATOR_SYSTEM}\n\nUser context: ${profile.summary} Weight your signal and action recommendations accordingly.`;
+  } catch {
+    return BASE_CURATOR_SYSTEM;
+  }
 }
 
 const BATCH_SIZE = 5;
@@ -59,6 +63,7 @@ export async function runCuration(): Promise<{ curated: number }> {
       }> = JSON.parse(cleaned);
 
       for (const item of enriched) {
+        if (!item.id || !item.summary || !item.signal) continue; // skip malformed items
         await prisma.article.update({
           where: { id: item.id },
           data: {

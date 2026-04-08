@@ -22,6 +22,6 @@ export async function claudeChat(params: {
     messages: [{ role: 'user', content: params.userMessage }],
   });
 
-  const block = response.content.find((b) => b.type === 'text');
-  return block?.type === 'text' ? block.text : '';
+  const block = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text');
+  return block?.text ?? '';
 }
