@@ -72,13 +72,19 @@ export default function DiagramList() {
             </p>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => {
-                  setNewName('Untitled Diagram');
-                  setTimeout(handleCreate, 0);
+                onClick={async () => {
+                  setCreating(true);
+                  try {
+                    const id = await createDiagram('Untitled Diagram');
+                    navigate(`/canvas/${id}`);
+                  } finally {
+                    setCreating(false);
+                  }
                 }}
-                className="px-5 py-2.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
+                disabled={creating}
+                className="px-5 py-2.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors disabled:opacity-40"
               >
-                + New Diagram
+                {creating ? 'Creating...' : '+ New Diagram'}
               </button>
             </div>
             <p className="text-slate-600 text-xs mt-8">
