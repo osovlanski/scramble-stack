@@ -2,11 +2,13 @@
   "name": "scramble-stack",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["backend", "frontend", "shared"],
+  "workspaces": ["apps/*/*", "shared"],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend"
+    "dev:canvas-backend": "npm run dev --workspace=apps/canvas/backend",
+    "dev:canvas-frontend": "npm run dev --workspace=apps/canvas/frontend",
+    "dev:news-backend": "npm run dev --workspace=apps/news-feed/backend",
+    "dev:news-frontend": "npm run dev --workspace=apps/news-feed/frontend",
+    "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
+    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
   }
 }
