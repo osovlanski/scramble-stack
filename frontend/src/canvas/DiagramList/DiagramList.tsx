@@ -57,10 +57,33 @@ export default function DiagramList() {
         )}
 
         {!loading && !error && diagrams.length === 0 && (
-          <div className="text-center py-24 text-slate-500">
-            <p className="text-5xl mb-4">🎨</p>
-            <p className="text-lg">No diagrams yet</p>
-            <p className="text-sm mt-1">Create your first system design diagram above</p>
+          <div className="flex flex-col items-center justify-center py-32 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-indigo-400">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <path d="M17.5 14v6M14.5 17h6" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-slate-200 mb-2">No diagrams yet</h2>
+            <p className="text-slate-400 text-sm max-w-xs mb-8">
+              Design your first system architecture — drag nodes onto the canvas, connect them, or let AI generate a diagram from a prompt.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setNewName('Untitled Diagram');
+                  setTimeout(handleCreate, 0);
+                }}
+                className="px-5 py-2.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
+              >
+                + New Diagram
+              </button>
+            </div>
+            <p className="text-slate-600 text-xs mt-8">
+              Or type a name in the field above and press Enter
+            </p>
           </div>
         )}
 
