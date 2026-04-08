@@ -6,8 +6,6 @@
   "scripts": {
     "dev:canvas-backend": "npm run dev --workspace=apps/canvas/backend",
     "dev:canvas-frontend": "npm run dev --workspace=apps/canvas/frontend",
-    "dev:news-backend": "npm run dev --workspace=apps/news-feed/backend",
-    "dev:news-frontend": "npm run dev --workspace=apps/news-feed/frontend",
     "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
     "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
   }
