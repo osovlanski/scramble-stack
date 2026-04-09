@@ -50,5 +50,7 @@ describe('runPreferenceAgent', () => {
     const result = await runPreferenceAgent();
     expect(result.updated).toBe(true);
     expect(prisma.userPreferenceProfile.upsert).toHaveBeenCalled();
+    const { claudeChat } = await import('../claude');
+    expect(claudeChat).toHaveBeenCalledOnce();
   });
 });

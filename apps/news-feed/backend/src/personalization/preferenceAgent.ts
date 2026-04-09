@@ -1,7 +1,7 @@
 import { prisma } from '../db';
 import { claudeChat } from '../claude';
 import { computePersonalScore } from './ranker';
-import type { UserPreferenceProfile } from '../sources/types';
+import type { Signal, Action, UserPreferenceProfile } from '../sources/types';
 
 const MIN_INTERACTIONS = 10;
 
@@ -41,20 +41,20 @@ export async function runPreferenceAgent(): Promise<{ updated: boolean }> {
     return { updated: false };
   }
 
-  const userMessage = `Interactions to analyze:\n${JSON.stringify(
-    interactions.map((i) => ({
-      type: i.type,
-      value: i.value,
-      themes: i.article?.themes ? JSON.parse(i.article.themes) : [],
-      signal: i.article?.signal,
-      action: i.article?.action,
-      source: i.article?.sourceId,
-    })),
-    null,
-    2
-  )}`;
-
   try {
+    const userMessage = `Interactions to analyze:\n${JSON.stringify(
+      interactions.map((i) => ({
+        type: i.type,
+        value: i.value,
+        themes: i.article?.themes ? JSON.parse(i.article.themes) : [],
+        signal: i.article?.signal,
+        action: i.article?.action,
+        source: i.article?.sourceId,
+      })),
+      null,
+      2
+    )}`;
+
     const raw = await claudeChat({ system: PREFERENCE_SYSTEM, userMessage, maxTokens: 1500 });
     const cleaned = raw.replace(/```json|```/g, '').trim();
     const profile: UserPreferenceProfile = JSON.parse(cleaned);
@@ -76,8 +76,8 @@ export async function runPreferenceAgent(): Promise<{ updated: boolean }> {
       const score = computePersonalScore(
         {
           themes: JSON.parse(article.themes),
-          signal: article.signal as any,
-          action: article.action as any,
+          signal: article.signal as Signal,
+          action: article.action as Action | null,
           sourceId: article.sourceId,
         },
         profile
@@ -86,7 +86,8 @@ export async function runPreferenceAgent(): Promise<{ updated: boolean }> {
     }
 
     return { updated: true };
-  } catch {
+  } catch (error) {
+    console.error('[preferenceAgent] failed:', error);
     return { updated: false };
   }
 }
