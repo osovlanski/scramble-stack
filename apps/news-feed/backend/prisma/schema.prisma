@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("NEWS_DATABASE_URL")
+}
+
+model Article {
+  id            String    @id @default(uuid())
+  externalId    String    @unique
+  title         String
+  url           String    @unique
+  sourceId      String
+  publishedAt   DateTime
+  rawContent    String
+
+  summary       String?
+  themes        String?
+  signal        String?
+  action        String?
+  insight       String?
+  curatedAt     DateTime?
+
+  personalScore Float     @default(1.0)
+  createdAt     DateTime  @default(now())
+
+  interactions  ArticleInteraction[]
+
+  @@index([sourceId])
+  @@index([curatedAt])
+  @@index([personalScore])
+}
+
+model Digest {
+  id           String   @id @default(uuid())
+  date         String   @unique
+  briefingText String
+  articleIds   String
+  createdAt    DateTime @default(now())
+}
+
+model ArticleInteraction {
+  id         String   @id @default(uuid())
+  articleId  String
+  type       String
+  value      Float?
+  recordedAt DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([recordedAt])
+}
+
+model UserPreferenceProfile {
+  id          Int      @id @default(1)
+  profileJson String
+  updatedAt   DateTime @updatedAt
+}

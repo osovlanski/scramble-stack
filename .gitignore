@@ -43,3 +43,7 @@ coverage/
 
 # Git worktrees
 .worktrees/
+
+# news-feed DB
+apps/news-feed/backend/prisma/news.db
+apps/news-feed/backend/.env

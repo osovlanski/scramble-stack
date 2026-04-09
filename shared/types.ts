@@ -16,6 +16,7 @@ export interface DiagramNodeData {
   technology?: string;
   color?: string;
   customNodeTypeId?: string;
+  notes?: string;
   [key: string]: unknown;
 }
 
