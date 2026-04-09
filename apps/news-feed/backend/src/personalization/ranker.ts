@@ -9,7 +9,7 @@ export const DEFAULT_PROFILE: UserPreferenceProfile = {
   actionWeights: { adopt: 1.0, watch: 1.0, avoid: 1.0, null: 1.0 },
   sourceWeights: {},
   summary: 'No preferences learned yet.',
-  updatedAt: new Date().toISOString(),
+  updatedAt: '1970-01-01T00:00:00.000Z',
 };
 
 interface ArticleAttributes {

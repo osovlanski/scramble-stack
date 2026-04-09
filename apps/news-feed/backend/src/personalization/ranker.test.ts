@@ -20,7 +20,7 @@ describe('computePersonalScore', () => {
       action: 'adopt',
       sourceId: 'geektime',
     }, profile);
-    // 1.0 × 1.5 × 1.4 × 1.3 × 1.2 = 3.276
+    // 1.5 × 1.4 × 1.3 × 1.2 = 3.276
     expect(score).toBeCloseTo(3.276, 2);
   });
 
