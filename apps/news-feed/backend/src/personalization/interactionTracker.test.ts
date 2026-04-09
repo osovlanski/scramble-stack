@@ -29,7 +29,7 @@ describe('recordInteraction', () => {
   });
 
   it('throws on invalid interaction type', async () => {
-    await expect(recordInteraction({ articleId: 'art-3', type: 'invalid' as any }))
-      .rejects.toThrow('Invalid interaction type');
+    await expect(recordInteraction({ articleId: 'art-3', type: 'invalid' }))
+      .rejects.toThrow('Invalid interaction type: invalid');
   });
 });
