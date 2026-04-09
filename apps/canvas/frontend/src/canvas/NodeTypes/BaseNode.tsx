@@ -56,6 +56,15 @@ export default function BaseNode({ data, selected, icon, color }: BaseNodeProps)
           {data.technology}
         </span>
       )}
+
+      {data.notes && (
+        <span
+          className="absolute bottom-1 right-1.5 text-indigo-400 text-[10px] leading-none"
+          title="Has notes"
+        >
+          📝
+        </span>
+      )}
     </div>
   );
 }

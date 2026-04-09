@@ -5,6 +5,8 @@ import UndoRedoButtons from './UndoRedoButtons';
 import ExportMenu from './ExportMenu';
 import VersionHistory from './VersionHistory';
 
+export type DrawMode = 'select' | 'pen' | 'eraser';
+
 interface ToolbarProps {
   diagramName: string;
   onNameChange: (name: string) => void;
@@ -12,6 +14,8 @@ interface ToolbarProps {
   onSave: () => void;
   onToggleAI: () => void;
   diagramId: string;
+  drawMode: DrawMode;
+  setDrawMode: (mode: DrawMode) => void;
 }
 
 const SAVE_STATUS_LABELS: Record<SaveStatus, string> = {
@@ -28,8 +32,14 @@ const SAVE_STATUS_COLORS: Record<SaveStatus, string> = {
   error: 'text-red-400',
 };
 
+const DRAW_MODE_BUTTONS: { mode: DrawMode; label: string; title: string }[] = [
+  { mode: 'select', label: '↖', title: 'Select mode' },
+  { mode: 'pen', label: '✏️', title: 'Pen mode' },
+  { mode: 'eraser', label: '⌫', title: 'Eraser mode' },
+];
+
 export default function Toolbar({
-  diagramName, onNameChange, saveStatus, onSave, onToggleAI, diagramId,
+  diagramName, onNameChange, saveStatus, onSave, onToggleAI, diagramId, drawMode, setDrawMode,
 }: ToolbarProps) {
   const navigate = useNavigate();
   const [editingName, setEditingName] = useState(false);
@@ -69,6 +79,23 @@ export default function Toolbar({
         <div className="flex-1" />
 
         <UndoRedoButtons />
+
+        <div className="flex gap-1 bg-slate-800 border border-slate-700 rounded-md p-0.5">
+          {DRAW_MODE_BUTTONS.map(({ mode, label, title }) => (
+            <button
+              key={mode}
+              onClick={() => setDrawMode(mode)}
+              title={title}
+              className={`px-2.5 py-1 text-xs rounded ${
+                drawMode === mode
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <button onClick={() => setShowVersions(true)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-md">
           History
