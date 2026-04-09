@@ -32,4 +32,13 @@ describe('postInteraction', () => {
     await postInteraction(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  it('returns 400 with error message when recordInteraction throws', async () => {
+    vi.mocked(recordInteraction).mockRejectedValueOnce(new Error('Invalid interaction type: bad'));
+    const req = { params: { id: 'art-1' }, body: { type: 'bad' } } as unknown as Request;
+    const res = mockRes();
+    await postInteraction(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid interaction type: bad' });
+  });
 });

@@ -3,9 +3,9 @@ import { recordInteraction } from '../personalization/interactionTracker';
 
 export async function postInteraction(req: Request, res: Response): Promise<void> {
   const articleId = req.params.id;
-  const { type, value } = req.body as { type?: string; value?: number };
+  const { type, value } = req.body as { type?: unknown; value?: number };
 
-  if (!type) {
+  if (typeof type !== 'string' || !type) {
     res.status(400).json({ error: 'type is required' });
     return;
   }

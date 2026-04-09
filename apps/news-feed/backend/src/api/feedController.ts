@@ -8,7 +8,8 @@ import sourcesConfig from '../../sources.config';
 const PAGE_SIZE = 20;
 
 export async function getFeed(req: Request, res: Response): Promise<void> {
-  const page = Math.max(1, parseInt((req.query.page as string) ?? '1', 10));
+  const rawPage = parseInt((req.query.page as string) ?? '1', 10);
+  const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
   const theme = (req.query.theme as string) || undefined;
   const signal = (req.query.signal as string) || undefined;
 
@@ -41,20 +42,25 @@ export async function getFeed(req: Request, res: Response): Promise<void> {
 
 export async function getTodayDigest(req: Request, res: Response): Promise<void> {
   const date = (req.query.date as string) ?? new Date().toISOString().split('T')[0];
-  const digest = await getDigest(date);
+
+  // Try to get existing digest; generate if not found
+  let digest = await getDigest(date);
+  if (!digest) {
+    await generateDigest(date);
+    digest = await getDigest(date);
+  }
 
   if (!digest) {
-    const { briefing, articleCount } = await generateDigest(date);
-    const created = await getDigest(date);
-    const articles = created ? await getDigestArticles(JSON.parse(created.articleIds)) : [];
-    res.json({ date, briefingText: briefing, articles, articleCount });
+    res.json({ date, briefingText: '', articles: [], articleCount: 0 });
     return;
   }
 
-  const articles = await getDigestArticles(JSON.parse(digest.articleIds));
+  const articleIds: string[] = JSON.parse(digest.articleIds || '[]');
+  const articles = await getDigestArticles(articleIds);
   res.json({ date, briefingText: digest.briefingText, articles, articleCount: articles.length });
 }
 
+// Returns articles for a digest, ordered by personalScore
 async function getDigestArticles(ids: string[]) {
   return prisma.article.findMany({
     where: { id: { in: ids } },
