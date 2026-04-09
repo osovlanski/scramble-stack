@@ -138,6 +138,12 @@ model Session {
 
 Claude generates: title, description, hints (3–5 bullet points), modelAnswer. Saved with `isAiGenerated: true`. Appears in the library immediately and is searchable.
 
+### Future: Scheduled Question Refresh
+
+Not in scope for v1. The `company` and `genre` fields on `Question` are designed to support it without schema changes.
+
+Planned enhancement: a weekly cron that iterates a `Company` table (name, industry, techStack) and generates 1–2 new questions per company when fewer than N exist for that company. A `staleness` flag will mark questions older than 6 months for review. This follows the same scheduler pattern as App B (News Feed) and should be built once real usage data shows which companies and genres are most in demand.
+
 ---
 
 ## API
