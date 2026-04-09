@@ -136,7 +136,7 @@ function CanvasBoardInner() {
   }, [drawMode]);
 
   return (
-    <div className="flex h-screen w-screen bg-slate-900">
+    <div className="flex h-full w-full bg-slate-900">
       <Palette onAddCustom={() => setShowCustomManager(true)} />
 
       <div className="flex-1 flex flex-col">
