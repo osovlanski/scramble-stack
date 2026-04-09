@@ -16,6 +16,7 @@ vi.mock('../claude', () => ({
 
 import { generateDigest, getDigest } from './digestService';
 import { prisma } from '../db';
+import { claudeChat } from '../claude';
 
 describe('generateDigest', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -38,7 +39,18 @@ describe('generateDigest', () => {
     expect(result.briefing).toBe('Today in tech: Kubernetes and LLMs dominate.');
   });
 
-  it('returns existing digest without regenerating', async () => {
+  it('returns existing digest without regenerating (idempotent)', async () => {
+    vi.mocked(prisma.digest.findUnique).mockResolvedValue({
+      id: 'd1', date: '2026-04-08', briefingText: 'Existing briefing', articleIds: '["art-0","art-1"]', createdAt: new Date(),
+    } as any);
+    const result = await generateDigest('2026-04-08');
+    expect(result.briefing).toBe('Existing briefing');
+    expect(result.articleCount).toBe(2);
+    expect(claudeChat).not.toHaveBeenCalled();
+    expect(prisma.digest.create).not.toHaveBeenCalled();
+  });
+
+  it('getDigest returns stored digest', async () => {
     vi.mocked(prisma.digest.findUnique).mockResolvedValue({
       id: 'd1', date: '2026-04-08', briefingText: 'Existing briefing', articleIds: '[]', createdAt: new Date(),
     } as any);

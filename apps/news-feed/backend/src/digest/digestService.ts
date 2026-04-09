@@ -1,5 +1,6 @@
 import { prisma } from '../db';
 import { claudeChat } from '../claude';
+import type { Digest } from '@prisma/client';
 
 const DIGEST_SYSTEM = `You are a principal tech architect writing a morning briefing for yourself.
 Given a list of today's top articles (pre-selected by relevance score), write a short
@@ -8,19 +9,21 @@ and what to skip. Be direct and opinionated. Write in second person ("Today's si
 
 export async function generateDigest(date: string): Promise<{ articleCount: number; briefing: string }> {
   const existing = await prisma.digest.findUnique({ where: { date } });
-  if (existing) return { articleCount: JSON.parse(existing.articleIds).length, briefing: existing.briefingText };
+  if (existing) {
+    const ids: string[] = JSON.parse(existing.articleIds || '[]');
+    return { articleCount: ids.length, briefing: existing.briefingText };
+  }
 
-  const articles = await prisma.article.findMany({
+  const allResults = await prisma.article.findMany({
     where: { curatedAt: { not: null } },
     orderBy: { personalScore: 'desc' },
     take: 10,
     select: { id: true, title: true, summary: true, themes: true, signal: true, action: true, sourceId: true, personalScore: true },
   });
-
-  const top10 = articles.slice(0, 10);
+  const articles = allResults.slice(0, 10);
 
   const userMessage = `Today's top articles (${date}):\n${JSON.stringify(
-    top10.map((a) => ({
+    articles.map((a) => ({
       title: a.title,
       summary: a.summary,
       themes: a.themes ? JSON.parse(a.themes) : [],
@@ -38,13 +41,13 @@ export async function generateDigest(date: string): Promise<{ articleCount: numb
     data: {
       date,
       briefingText: briefing,
-      articleIds: JSON.stringify(top10.map((a) => a.id)),
+      articleIds: JSON.stringify(articles.map((a) => a.id)),
     },
   });
 
-  return { articleCount: top10.length, briefing };
+  return { articleCount: articles.length, briefing };
 }
 
-export async function getDigest(date: string) {
+export async function getDigest(date: string): Promise<Digest | null> {
   return prisma.digest.findUnique({ where: { date } });
 }
