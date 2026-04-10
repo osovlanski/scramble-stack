@@ -13,9 +13,11 @@ build/
 .env.*
 !.env.example
 
-# Prisma
+# Prisma / SQLite databases
 backend/prisma/migrations/dev.db
 backend/prisma/*.db
+apps/*/backend/*.db
+apps/*/backend/prisma/*.db
 
 # Logs
 logs/

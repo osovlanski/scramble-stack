@@ -2,13 +2,22 @@
   "name": "scramble-stack",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/*/*", "shared"],
+  "workspaces": [
+    "apps/*/*",
+    "shared"
+  ],
   "scripts": {
+    "dev": "concurrently --names \"canvas-be,canvas-fe,news-be,news-fe,qa-be,qa-fe\" --prefix-colors \"blue,cyan,green,magenta,yellow,white\" \"npm run dev:canvas-backend\" \"npm run dev:canvas-frontend\" \"npm run dev:news-feed-backend\" \"npm run dev:news-feed-frontend\" \"npm run dev:system-design-qa-backend\" \"npm run dev:system-design-qa-frontend\"",
     "dev:canvas-backend": "npm run dev --workspace=apps/canvas/backend",
     "dev:canvas-frontend": "npm run dev --workspace=apps/canvas/frontend",
-    "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
-    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend",
+    "dev:news-feed-backend": "npm run dev --workspace=apps/news-feed/backend",
+    "dev:news-feed-frontend": "npm run dev --workspace=apps/news-feed/frontend",
     "dev:system-design-qa-backend": "npm run dev --workspace=apps/system-design-qa/backend",
-    "dev:system-design-qa-frontend": "npm run dev --workspace=apps/system-design-qa/frontend"
+    "dev:system-design-qa-frontend": "npm run dev --workspace=apps/system-design-qa/frontend",
+    "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
+    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
