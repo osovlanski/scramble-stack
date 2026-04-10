@@ -49,3 +49,10 @@ coverage/
 # news-feed DB
 apps/news-feed/backend/prisma/news.db
 apps/news-feed/backend/.env
+
+# Tool runtime artifacts
+.playwright-mcp/
+.superpowers/
+
+# Legacy root backend node_modules (scripts kept, deps not needed)
+backend/node_modules/
