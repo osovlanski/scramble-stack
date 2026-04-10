@@ -2,147 +2,154 @@
 
 ## Overview
 
-ScrambleStack is a monorepo with three npm workspaces:
+ScrambleStack is a Node.js monorepo (`npm workspaces`) with three independent apps, each with a backend and frontend workspace:
 
 ```
 scramble-stack/
-├── shared/          # TypeScript types shared between frontend and backend
-├── backend/         # Express API
-└── frontend/        # React SPA
+├── apps/
+│   ├── canvas/
+│   │   ├── backend/     Express + Prisma (PostgreSQL) + Claude   port 3000
+│   │   └── frontend/    Vite + React + Tailwind                  port 5173
+│   ├── news-feed/
+│   │   ├── backend/     Express + Prisma (SQLite) + Claude       port 3001
+│   │   └── frontend/    Vite + React + Tailwind                  port 5174
+│   └── system-design-qa/
+│       ├── backend/     Express + Prisma (SQLite) + Claude       port 3002
+│       └── frontend/    Vite + React + Tailwind                  port 5175
+└── package.json         workspace root ("apps/*/*")
 ```
+
+The Canvas frontend is the **hub** — it serves a landing page (`/`) showing all three apps as tiles. The sidebar (`AppSidebar`) provides persistent cross-app navigation.
 
 ---
 
-## Backend (`backend/`)
+## App A — Canvas (`apps/canvas/`)
+
+### Backend
 
 ```
 src/
-├── index.ts                   # Express entry point, env validation, server start
+├── index.ts                   # Express entry point
 ├── core/
-│   ├── databaseService.ts     # Prisma client initialisation (PrismaPg adapter)
-│   ├── claudeService.ts       # Anthropic SDK wrapper — generates diagram JSON
+│   ├── databaseService.ts     # Prisma client (PrismaPg adapter for PostgreSQL)
+│   ├── claudeService.ts       # Anthropic SDK — generates diagram JSON via SSE
 │   ├── cacheService.ts        # Two-layer cache: NodeCache (memory) + Redis (optional)
-│   ├── configService.ts       # Typed config with env-var overrides
-│   └── logger.ts              # Winston logger with canvas/db/ai prefixes
+│   ├── configService.ts       # Typed config from env vars
+│   └── logger.ts              # Winston logger
 ├── middleware/
-│   └── authMiddleware.ts      # JWT Bearer verification; sets req.userId
+│   └── authMiddleware.ts      # JWT Bearer verification
 └── canvas/
-    ├── routes.ts              # All /api/canvas/* routes; applies authMiddleware
-    ├── canvasController.ts    # Request/response handling for all canvas endpoints
+    ├── routes.ts              # All /api/diagrams/* routes + public /export
+    ├── canvasController.ts    # Request handlers
     └── services/
-        ├── diagramService.ts      # CRUD + auto-versioning (snapshot every 10 saves, max 20)
-        ├── aiGeneratorService.ts  # Calls claudeService, sanitises node types
-        ├── exportService.ts       # JSON export (strips thumbnail from meta)
+        ├── diagramService.ts         # CRUD + auto-versioning (snapshot every 10 saves)
+        ├── aiGeneratorService.ts     # Calls Claude, sanitises node types
+        ├── exportService.ts          # JSON export
         └── customNodeTypeService.ts
 ```
 
-### Database schema (Prisma)
+**Database:** PostgreSQL via Prisma. Models: `User`, `Diagram`, `DiagramVersion`, `CustomNodeType`.
 
-| Model | Key fields |
-|---|---|
-| `User` | id, email, name |
-| `Diagram` | id, userId, name, nodes (Json), edges (Json), viewport (Json?), saveCount |
-| `DiagramVersion` | id, diagramId, version, nodes (Json), edges (Json) |
-| `CustomNodeType` | id, userId, name, iconSvg, color, description |
+**Public endpoint:** `GET /api/diagrams/:id/export` — called by the System Design Q&A backend when scoring submissions with an attached diagram. No auth required.
 
-Versioning: on every 10th save (`saveCount % 10 === 0`), the service snapshots nodes+edges into `DiagramVersion`. When the count exceeds 20, the oldest version is pruned.
+**AI generation (SSE):** Client POSTs to `/api/canvas/generate`. Backend streams `meta`, `node`, `edge`, `done` events as Claude responds.
 
-### API routes
-
-```
-GET    /health
-
-GET    /api/canvas/diagrams
-POST   /api/canvas/diagrams
-GET    /api/canvas/diagrams/:id
-PUT    /api/canvas/diagrams/:id
-DELETE /api/canvas/diagrams/:id
-
-GET    /api/canvas/diagrams/:id/versions
-POST   /api/canvas/diagrams/:id/versions/:ver/restore
-
-POST   /api/canvas/generate              (SSE stream)
-POST   /api/canvas/diagrams/:id/export
-
-GET    /api/canvas/node-types/custom
-POST   /api/canvas/node-types/custom
-DELETE /api/canvas/node-types/custom/:id
-```
-
-All routes except `/health` require `Authorization: Bearer <jwt>`.
-
-### AI generation (SSE)
-
-The client opens a POST to `/api/canvas/generate`. The backend calls Claude, then streams events over SSE:
-
-```
-event: meta   — diagram name and description
-event: node   — one node (emitted per node with 80ms delay for progressive rendering)
-event: edge   — one edge
-event: done   — stream complete
-event: error  — generation failure
-```
-
-The frontend uses `fetch` + `ReadableStream` (not `EventSource`, which is GET-only).
-
----
-
-## Frontend (`frontend/`)
+### Frontend
 
 ```
 src/
-├── main.tsx                  # React root, router setup
-├── App.tsx                   # Top-level routes
-├── services/
-│   └── canvasApi.ts          # Typed fetch wrapper for all backend calls
+├── App.tsx               # Routes: / (HubPage), /canvas/:id, auth pages
+├── AppLayout.tsx         # Persistent sidebar wrapper (React Router Outlet)
+├── AppSidebar.tsx        # 48px icon rail — Canvas, News Feed, System Design Q&A links
+├── HubPage.tsx           # Landing page with app tiles
 └── canvas/
-    ├── NodeTypes/
-    │   ├── index.ts          # NODE_TYPES map (React Flow) + PALETTE_CATEGORIES
-    │   └── *.tsx             # One component per node type (24 total)
-    ├── Board/
-    │   ├── CanvasBoard.tsx   # ReactFlowProvider, drag-drop from palette
-    │   └── useCanvas.ts      # State: nodes/edges/viewport, debounced save (1500ms), thumbnail
-    ├── Toolbar/
-    │   ├── Toolbar.tsx       # Save status, diagram name, undo/redo, export, version history
-    │   ├── ExportMenu.tsx
-    │   ├── UndoRedoButtons.tsx
-    │   └── VersionHistory.tsx
-    ├── AIGenerator/
-    │   ├── AIGeneratorPanel.tsx
-    │   ├── useAIGenerator.ts  # Streams nodes/edges via SSE; AbortController for cancel
-    │   └── GenerationProgress.tsx
-    ├── DiagramList/
-    │   ├── DiagramList.tsx
-    │   ├── DiagramCard.tsx
-    │   └── useDiagramList.ts  # CRUD + optimistic delete
-    └── Palette/
-        └── Palette.tsx        # Sidebar with draggable node categories
+    ├── Board/            # ReactFlow canvas, SVG draw overlay
+    ├── DiagramList/      # CRUD list view
+    ├── Toolbar/          # Save, undo/redo, export, versions
+    ├── AIGenerator/      # SSE streaming panel
+    ├── NodeTypes/        # 24 node type components
+    └── Palette/          # Draggable node palette
 ```
 
-### State flow
+All pages share `AppLayout` which renders `AppSidebar` on the left. Hub tiles link to other apps by `VITE_NEWS_FEED_URL` / `VITE_SYSTEM_DESIGN_URL` (if unset, shown as "Coming soon").
+
+---
+
+## App B — News Feed (`apps/news-feed/`)
+
+Fetches and summarizes system design news via Claude. Backend uses SQLite for article caching. Not described in detail here.
+
+---
+
+## App C — System Design Q&A (`apps/system-design-qa/`)
+
+### Data flow
 
 ```
-DiagramList → navigate to /canvas/:id
-  → useCanvas loads diagram (getDiagram)
-  → nodes/edges managed by React Flow (useNodesState / useEdgesState)
-  → every change debounces a save (1500ms) → canvasApi.saveDiagram
-  → thumbnail captured via html-to-image before save
+── QUESTION LIBRARY ──────────────────────────────────────────
+questions.seed.ts → seeded on first run → SQLite DB
+POST /api/questions/generate → Claude → DB (isAiGenerated: true)
 
-AI panel → useAIGenerator.generate(prompt)
-  → streams from /api/canvas/generate
-  → appends nodes/edges to canvas as they arrive
+── SESSION ───────────────────────────────────────────────────
+POST /api/sessions → new Session (mode: structured|interview|graded)
+
+  structured / graded:
+    user writes text answer + optional canvasDiagramId
+    POST /submit → fetches diagram from Canvas backend (if attached)
+                 → Claude scores → score + feedback stored
+
+  interview:
+    POST /message turns (user ↔ Claude clarifications)
+    POST /submit → full conversation + answer + optional diagram
+                 → Claude scores → score + feedback stored
+
+── SCORING ───────────────────────────────────────────────────
+5 dimensions × 20 pts = 100 pts total:
+  scalability, data_model, component_design, reliability, tradeoffs
 ```
 
-### Shared types (`shared/types.ts`)
+### Backend
 
-Both packages import from `@shared/types` (resolved via tsconfig `paths` on the backend and vite `resolve.alias` on the frontend). This is the single source of truth for:
+```
+src/
+├── db.ts                       # Prisma singleton (globalThis pattern)
+├── claude.ts                   # claudeChat + claudeConverse wrappers
+├── index.ts                    # Express app, CORS, seeder on startup
+├── api/routes.ts               # All routes
+├── questions/
+│   ├── questions.seed.ts       # 20 seeded questions with model answers
+│   ├── seeder.ts               # Seeds DB if empty on startup
+│   ├── questionController.ts   # GET /questions, GET /questions/:id
+│   ├── generateController.ts   # POST /questions/generate
+│   └── questionGenerator.ts   # Claude-based question generation
+└── sessions/
+    ├── interviewService.ts     # Opening question + back-and-forth turns
+    ├── diagramFetcher.ts       # HTTP call to Canvas backend export endpoint
+    ├── scoringService.ts       # 5-dimension Claude scoring
+    └── sessionController.ts   # POST /sessions, /message, /submit, GET /result
+```
 
-- `NodeType` union (24 members)
-- `DiagramNodeData`, `DiagramNodeRaw`, `DiagramEdgeRaw`
-- `DiagramMeta`, `DiagramFull`, `SaveDiagramPayload`
-- `DiagramVersionMeta`, `CustomNodeTypeData`
-- `GenerateDiagramRequest`, `GenerateDiagramResponse`
-- `ApiResponse<T>`
+### Frontend (`apps/system-design-qa/frontend/`)
+
+```
+src/
+├── App.tsx          # Routes: / (LibraryPage), /questions/:id, /sessions/:id, /sessions/:id/result
+├── api.ts           # Axios client wrapping all backend calls
+├── types.ts         # Question, Session, SessionResult, ScoreBreakdown interfaces
+├── Library/
+│   ├── LibraryPage.tsx    # Filter chips + question grid + AI generator panel
+│   ├── FilterBar.tsx      # Genre + difficulty + company search filters
+│   └── QuestionCard.tsx   # Clickable card navigating to question detail
+├── Question/
+│   └── QuestionPage.tsx   # Description, hints toggle, mode selector, Start Session
+├── Session/
+│   ├── SessionPage.tsx    # Mode router — picks StructuredEditor/GradedEditor/InterviewChat
+│   ├── StructuredEditor.tsx  # Free-text answer + optional diagram ID
+│   ├── GradedEditor.tsx      # Same as structured + 45-min countdown timer
+│   └── InterviewChat.tsx     # Chat bubbles, send-on-Enter, submit design phase
+└── Result/
+    └── ResultPage.tsx    # Score ring, dimension bars, strengths/gaps, model answer reveal
+```
 
 ---
 
@@ -150,27 +157,33 @@ Both packages import from `@shared/types` (resolved via tsconfig `paths` on the 
 
 | Service | Platform | Trigger |
 |---|---|---|
-| Frontend | Vercel | Push to `main` |
-| Backend | Railway | Push to `main` |
-
-See `.github/workflows/deploy.yml` for the CI/CD pipeline.
+| Canvas frontend | Vercel | Push to `main` |
+| Canvas backend | Railway | Push to `main` |
+| News Feed backend | Railway | Push to `main` |
+| System Design Q&A backend | Railway | Push to `main` |
 
 ### Environment variables
 
-**Backend (Railway):**
-
+**Canvas backend:**
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | yes | PostgreSQL connection string |
-| `JWT_SECRET` | yes | Signing secret for JWTs |
+| `JWT_SECRET` | yes | JWT signing secret |
 | `ANTHROPIC_API_KEY` | yes | Claude API key |
-| `FRONTEND_URL` | yes | Allowed CORS origin (Vercel URL) |
-| `REDIS_URL` | no | Redis connection string; falls back to memory cache |
-| `PORT` | no | Defaults to 3000 |
-| `NODE_ENV` | no | Set to `production` |
+| `FRONTEND_URL` | yes | Allowed CORS origin |
+| `REDIS_URL` | no | Falls back to memory cache |
+| `PORT` | no | Default `3000` |
 
-**Frontend (Vercel):**
-
+**Canvas frontend:**
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | no | Backend URL if not using a proxy rewrite |
+| `VITE_NEWS_FEED_URL` | no | URL of deployed News Feed frontend |
+| `VITE_SYSTEM_DESIGN_URL` | no | URL of deployed System Design Q&A frontend |
+
+**System Design Q&A backend:**
+| Variable | Required | Description |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | yes | Claude API key |
+| `CANVAS_BACKEND_URL` | no | Canvas backend URL (default `http://localhost:3000`) |
+| `PORT` | no | Default `3002` |
+| `GRADED_TIMEOUT_MINUTES` | no | Default `45` |
