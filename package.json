@@ -7,6 +7,8 @@
     "dev:canvas-backend": "npm run dev --workspace=apps/canvas/backend",
     "dev:canvas-frontend": "npm run dev --workspace=apps/canvas/frontend",
     "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
-    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
+    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend",
+    "dev:system-design-qa-backend": "npm run dev --workspace=apps/system-design-qa/backend",
+    "dev:system-design-qa-frontend": "npm run dev --workspace=apps/system-design-qa/frontend"
   }
 }
