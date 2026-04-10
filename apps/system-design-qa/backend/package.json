@@ -21,7 +21,7 @@
     "@anthropic-ai/sdk": "^0.27.0",
     "@prisma/adapter-better-sqlite3": "^7.7.0",
     "@prisma/adapter-pg": "^7.2.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/client": "7.6.0",
     "@types/better-sqlite3": "^7.6.13",
     "axios": "^1.7.7",
     "better-sqlite3": "^12.8.0",
