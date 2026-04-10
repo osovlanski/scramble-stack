@@ -40,7 +40,7 @@ export async function createSession(req: Request, res: Response): Promise<void> 
 
 export async function sendMessage(req: Request, res: Response): Promise<void> {
   const session = await prisma.session.findUnique({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     include: { question: true },
   });
 
@@ -65,7 +65,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
 
 export async function submitSession(req: Request, res: Response): Promise<void> {
   const session = await prisma.session.findUnique({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     include: { question: true },
   });
 
@@ -120,7 +120,7 @@ export async function submitSession(req: Request, res: Response): Promise<void> 
 
 export async function getResult(req: Request, res: Response): Promise<void> {
   const session = await prisma.session.findUnique({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     include: { question: true },
   });
 

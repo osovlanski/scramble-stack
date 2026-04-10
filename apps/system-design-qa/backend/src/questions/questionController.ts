@@ -24,7 +24,7 @@ export async function getQuestions(req: Request, res: Response): Promise<void> {
 }
 
 export async function getQuestion(req: Request, res: Response): Promise<void> {
-  const question = await prisma.question.findUnique({ where: { id: req.params.id } });
+  const question = await prisma.question.findUnique({ where: { id: String(req.params.id) } });
   if (!question) {
     res.status(404).json({ error: 'Question not found' });
     return;
