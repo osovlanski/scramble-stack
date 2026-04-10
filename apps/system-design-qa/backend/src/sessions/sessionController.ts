@@ -19,13 +19,19 @@ export async function createSession(req: Request, res: Response): Promise<void> 
   });
 
   if (mode === 'interview') {
-    const openingQuestion = await getOpeningQuestion(question);
-    const messages: InterviewMessage[] = [{ role: 'assistant', content: openingQuestion }];
-    const updated = await prisma.session.update({
-      where: { id: session.id },
-      data: { messages: JSON.stringify(messages) },
-    });
-    res.json({ id: updated.id, messages });
+    try {
+      const openingQuestion = await getOpeningQuestion(question);
+      const messages: InterviewMessage[] = [{ role: 'assistant', content: openingQuestion }];
+      const updated = await prisma.session.update({
+        where: { id: session.id },
+        data: { messages: JSON.stringify(messages) },
+      });
+      res.json({ id: updated.id, messages });
+    } catch (err) {
+      console.error('[sessionController] failed to get opening question:', err);
+      await prisma.session.update({ where: { id: session.id }, data: { status: 'error' } });
+      res.status(500).json({ error: 'Failed to start interview session' });
+    }
     return;
   }
 

@@ -88,10 +88,50 @@ describe('submitSession', () => {
   });
 
   it('returns 400 when session already submitted', async () => {
+    vi.mocked(prisma.session.findUnique).mockResolvedValue({ id: 's1', status: 'submitted', question: mockQuestion } as any);
+    const req = { params: { id: 's1' }, body: { textAnswer: 'answer' } } as unknown as Request;
+    const res = mockRes();
+    await submitSession(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('returns 400 when session already scored', async () => {
     vi.mocked(prisma.session.findUnique).mockResolvedValue({ id: 's1', status: 'scored', question: mockQuestion } as any);
     const req = { params: { id: 's1' }, body: { textAnswer: 'answer' } } as unknown as Request;
     const res = mockRes();
     await submitSession(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+describe('sendMessage', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns 404 when session not found', async () => {
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null);
+    const req = { params: { id: 'missing' }, body: { content: 'hello' } } as unknown as Request;
+    const res = mockRes();
+    await sendMessage(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('returns 400 when session is not in_progress', async () => {
+    vi.mocked(prisma.session.findUnique).mockResolvedValue({
+      id: 's1', status: 'scored', mode: 'interview', messages: '[]', question: mockQuestion,
+    } as any);
+    const req = { params: { id: 's1' }, body: { content: 'hello' } } as unknown as Request;
+    const res = mockRes();
+    await sendMessage(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('returns 400 when session is not interview mode', async () => {
+    vi.mocked(prisma.session.findUnique).mockResolvedValue({
+      id: 's1', status: 'in_progress', mode: 'structured', messages: '[]', question: mockQuestion,
+    } as any);
+    const req = { params: { id: 's1' }, body: { content: 'hello' } } as unknown as Request;
+    const res = mockRes();
+    await sendMessage(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 });
