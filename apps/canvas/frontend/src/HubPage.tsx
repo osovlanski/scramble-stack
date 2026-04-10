@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, Newspaper, ArrowRight, Cpu } from 'lucide-react';
+import { LayoutGrid, Newspaper, ArrowRight, Cpu, BrainCircuit } from 'lucide-react';
 
 const NEWS_FEED_URL = import.meta.env.VITE_NEWS_FEED_URL as string | undefined;
+const SYSTEM_DESIGN_URL = import.meta.env.VITE_SYSTEM_DESIGN_URL as string | undefined;
 
 interface AppDefinition {
   key: string;
@@ -43,6 +44,20 @@ export default function HubPage() {
         ? 'border-cyan-500/40 hover:border-cyan-400/70'
         : 'border-slate-700/60 opacity-60',
       iconBgClass: 'bg-cyan-500/10 text-cyan-400',
+    },
+    {
+      key: 'system-design-qa',
+      icon: <BrainCircuit size={28} strokeWidth={1.5} />,
+      name: 'System Design Q&A',
+      description: 'Practice system design interviews — question library, mock interviews, AI scoring',
+      status: SYSTEM_DESIGN_URL ? 'available' : 'coming-soon',
+      action: () => {
+        if (SYSTEM_DESIGN_URL) window.open(SYSTEM_DESIGN_URL, '_blank', 'noopener,noreferrer');
+      },
+      accentClass: SYSTEM_DESIGN_URL
+        ? 'border-violet-500/40 hover:border-violet-400/70'
+        : 'border-slate-700/60 opacity-60',
+      iconBgClass: 'bg-violet-500/10 text-violet-400',
     },
   ];
 

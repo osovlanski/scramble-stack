@@ -4,6 +4,11 @@ import { canvasController } from './canvasController';
 
 const router = Router();
 
+// Public endpoint for server-to-server diagram export (no auth required)
+router.get('/diagrams/:id/export', (req, res) =>
+  canvasController.getPublicExport(req as any, res)
+);
+
 router.use(authMiddleware as any);
 
 router.get('/diagrams', (req, res) => canvasController.listDiagrams(req as any, res));

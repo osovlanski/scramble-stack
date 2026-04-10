@@ -136,6 +136,23 @@ export const canvasController = {
     }
   },
 
+  async getPublicExport(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const prisma = getPrisma()!;
+      const record = await prisma.diagram.findUnique({ where: { id: req.params.id as string } });
+      if (!record) {
+        res.status(404).json({ error: 'Diagram not found' });
+        return;
+      }
+      const nodes = record.nodes ?? [];
+      const edges = record.edges ?? [];
+      res.json({ name: record.name, nodes, edges });
+    } catch (error) {
+      logger.fail('Failed to export diagram', { error });
+      res.status(500).json({ error: 'Failed to export diagram' });
+    }
+  },
+
   async listCustomNodeTypes(req: AuthRequest, res: Response): Promise<void> {
     try {
       const prisma = getPrisma()!;
