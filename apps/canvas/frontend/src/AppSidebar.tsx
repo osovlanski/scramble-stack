@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Cpu, LayoutGrid, Newspaper, Home } from 'lucide-react';
+import { Cpu, LayoutGrid, Newspaper, Home, BrainCircuit } from 'lucide-react';
 
 const NEWS_FEED_URL = import.meta.env.VITE_NEWS_FEED_URL as string | undefined;
+const SYSTEM_DESIGN_URL = import.meta.env.VITE_SYSTEM_DESIGN_URL as string | undefined;
 
 interface NavItem {
   key: string;
@@ -32,6 +33,15 @@ export default function AppSidebar() {
         if (NEWS_FEED_URL) window.open(NEWS_FEED_URL, '_blank', 'noopener,noreferrer');
       },
       disabled: !NEWS_FEED_URL,
+    },
+    {
+      key: 'system-design-qa',
+      icon: <BrainCircuit size={18} strokeWidth={1.5} />,
+      label: SYSTEM_DESIGN_URL ? 'System Design Q&A' : 'System Design Q&A (coming soon)',
+      action: () => {
+        if (SYSTEM_DESIGN_URL) window.open(SYSTEM_DESIGN_URL, '_blank', 'noopener,noreferrer');
+      },
+      disabled: !SYSTEM_DESIGN_URL,
     },
   ];
 
