@@ -36,9 +36,7 @@ export default function HubPage() {
       description: 'Curated tech news, daily digest, AI signal filtering',
       status: NEWS_FEED_URL ? 'available' : 'coming-soon',
       action: () => {
-        if (NEWS_FEED_URL) {
-          window.open(NEWS_FEED_URL, '_blank', 'noopener,noreferrer');
-        }
+        if (NEWS_FEED_URL) window.location.href = NEWS_FEED_URL;
       },
       accentClass: NEWS_FEED_URL
         ? 'border-cyan-500/40 hover:border-cyan-400/70'
@@ -52,7 +50,7 @@ export default function HubPage() {
       description: 'Practice system design interviews — question library, mock interviews, AI scoring',
       status: SYSTEM_DESIGN_URL ? 'available' : 'coming-soon',
       action: () => {
-        if (SYSTEM_DESIGN_URL) window.open(SYSTEM_DESIGN_URL, '_blank', 'noopener,noreferrer');
+        if (SYSTEM_DESIGN_URL) window.location.href = SYSTEM_DESIGN_URL;
       },
       accentClass: SYSTEM_DESIGN_URL
         ? 'border-violet-500/40 hover:border-violet-400/70'

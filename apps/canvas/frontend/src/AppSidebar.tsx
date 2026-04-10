@@ -30,7 +30,7 @@ export default function AppSidebar() {
       icon: <Newspaper size={18} strokeWidth={1.5} />,
       label: NEWS_FEED_URL ? 'News Feed' : 'News Feed (coming soon)',
       action: () => {
-        if (NEWS_FEED_URL) window.open(NEWS_FEED_URL, '_blank', 'noopener,noreferrer');
+        if (NEWS_FEED_URL) window.location.href = NEWS_FEED_URL;
       },
       disabled: !NEWS_FEED_URL,
     },
@@ -39,7 +39,7 @@ export default function AppSidebar() {
       icon: <BrainCircuit size={18} strokeWidth={1.5} />,
       label: SYSTEM_DESIGN_URL ? 'System Design Q&A' : 'System Design Q&A (coming soon)',
       action: () => {
-        if (SYSTEM_DESIGN_URL) window.open(SYSTEM_DESIGN_URL, '_blank', 'noopener,noreferrer');
+        if (SYSTEM_DESIGN_URL) window.location.href = SYSTEM_DESIGN_URL;
       },
       disabled: !SYSTEM_DESIGN_URL,
     },

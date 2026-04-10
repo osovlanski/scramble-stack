@@ -48,6 +48,7 @@ coverage/
 
 # news-feed DB
 apps/news-feed/backend/prisma/news.db
+apps/news-feed/backend/prisma/dev.db
 apps/news-feed/backend/.env
 
 # Tool runtime artifacts

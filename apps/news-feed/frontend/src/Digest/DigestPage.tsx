@@ -38,11 +38,17 @@ export function DigestPage() {
     <div className="max-w-2xl mx-auto">
       <div className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800">
         <div className="flex items-center gap-3 px-4 py-3">
-          <span className="font-semibold text-slate-100">Morning Brief</span>
+          <a
+            href={import.meta.env.VITE_HUB_URL ?? 'http://localhost:5173'}
+            className="font-semibold text-slate-100 hover:text-indigo-400 transition-colors"
+            title="Back to ScrambleStack hub"
+          >
+            ← ScrambleStack
+          </a>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-400 text-sm">Morning Brief</span>
           {digest && (
-            <span className="text-slate-500 text-sm">
-              {formatDate(date)} · {digest.articleCount} articles
-            </span>
+            <span className="text-slate-600 text-sm">· {formatDate(date)} · {digest.articleCount} articles</span>
           )}
           <div className="ml-auto flex items-center gap-2">
             <button
