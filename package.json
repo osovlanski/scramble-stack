@@ -7,6 +7,7 @@
     "shared"
   ],
   "scripts": {
+    "postinstall": "npm run db:generate --workspace=apps/canvas/backend && npm run db:generate --workspace=apps/system-design-qa/backend",
     "dev": "concurrently --names \"canvas-be,canvas-fe,news-be,news-fe,qa-be,qa-fe\" --prefix-colors \"blue,cyan,green,magenta,yellow,white\" \"npm run dev:canvas-backend\" \"npm run dev:canvas-frontend\" \"npm run dev:news-feed-backend\" \"npm run dev:news-feed-frontend\" \"npm run dev:system-design-qa-backend\" \"npm run dev:system-design-qa-frontend\"",
     "dev:canvas-backend": "npm run dev --workspace=apps/canvas/backend",
     "dev:canvas-frontend": "npm run dev --workspace=apps/canvas/frontend",
@@ -18,6 +19,7 @@
     "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prisma": "^7.7.0"
   }
 }
