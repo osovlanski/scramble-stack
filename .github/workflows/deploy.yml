@@ -16,6 +16,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Set dummy DB URLs for Prisma client generation
+        run: |
+          echo "DATABASE_URL=postgresql://ci:ci@localhost/ci" >> $GITHUB_ENV
+          echo "NEWS_DATABASE_URL=file:./ci.db" >> $GITHUB_ENV
       - name: Install dependencies
         run: npm ci
 
@@ -55,6 +59,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Set dummy DB URLs for Prisma client generation
+        run: |
+          echo "DATABASE_URL=postgresql://ci:ci@localhost/ci" >> $GITHUB_ENV
+          echo "NEWS_DATABASE_URL=file:./ci.db" >> $GITHUB_ENV
       - name: Install dependencies
         run: npm ci
       - name: Install Vercel CLI
