@@ -2,35 +2,58 @@
 
 ## 1. Prerequisites
 
-- Node.js 18+
+- Node.js 22.12+ (Prisma 7 requires it)
+- Docker Desktop (runs Postgres + Redis for canvas backend)
 - An [Anthropic API key](https://console.anthropic.com) — required by all three backends
 
-Canvas backend also requires:
-- PostgreSQL 14+ (local or hosted)
+> News Feed and System Design Q&A backends use SQLite — no separate DB setup needed.
 
-News Feed and System Design Q&A backends use SQLite — no separate DB setup needed.
-
-## 2. Install
+## 2. One-command start
 
 ```bash
 git clone <repo-url>
 cd scramble-stack
 npm install
+
+export ANTHROPIC_API_KEY=sk-ant-...
+npm run dev:all
 ```
 
-## 3. Configure environments
+`dev:all` will:
+1. Copy every `apps/*/.env.example` into `.env` if missing.
+2. Boot `postgres` + `redis` containers (images default to the Payoneer whitelist mirror; override with `POSTGRES_IMAGE` / `REDIS_IMAGE` off-network).
+3. Run `prisma generate` + `prisma db push` for all 3 backends.
+4. Launch all 6 dev processes via overmind (falls back to mprocs, then concurrently).
+
+Open <http://localhost:5173> when the boot output settles.
+
+## 3. Manual alternative
+
+If you'd rather drive each piece yourself:
+
+```bash
+npm install
+npm run dev:infra            # starts postgres + redis only
+npm run dev:smart            # starts the 6 processes
+
+```
+
+## 4. Environment reference
+
+`dev:all` seeds these from `.env.example`. Edit the generated `.env` files if your setup diverges.
 
 ### Canvas backend (`apps/canvas/backend/.env`)
 
 ```env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/scramblestack
+DATABASE_URL=postgresql://scramble:scramble@localhost:5432/scramble
+REDIS_URL=redis://localhost:6379
 JWT_SECRET=change-me-to-something-long-and-random
 ANTHROPIC_API_KEY=sk-ant-...
 FRONTEND_URL=http://localhost:5173
 PORT=3000
 ```
 
-> **Redis** (`REDIS_URL`) is optional — falls back to in-memory cache.
+> Both values match the services spun up by `npm run dev:infra`. Redis falls back to the in-memory layer if unreachable.
 
 ```bash
 cd apps/canvas/backend
@@ -73,33 +96,20 @@ VITE_SYSTEM_DESIGN_URL=http://localhost:5175
 
 > Without these, the hub page shows News Feed and System Design Q&A as "Coming soon".
 
-## 4. Start the servers
+## 5. Starting servers individually
 
-Open five terminals (or use a process manager like `tmux`):
+If you need to run just one process:
 
 ```bash
-# Terminal 1
 npm run dev:canvas-backend       # http://localhost:3000
-
-# Terminal 2
-npm run dev:canvas-frontend      # http://localhost:5173  ← open this
-
-# Terminal 3 (optional)
+npm run dev:canvas-frontend      # http://localhost:5173  ← hub
 npm run dev:news-feed-backend    # http://localhost:3001
-
-# Terminal 4 (optional)
 npm run dev:news-feed-frontend   # http://localhost:5174
-
-# Terminal 5 (optional)
 npm run dev:system-design-qa-backend    # http://localhost:3002
-
-# Terminal 6 (optional)
 npm run dev:system-design-qa-frontend   # http://localhost:5175
 ```
 
-Open http://localhost:5173 — the hub page is the landing page for all apps.
-
-## 5. Verify
+## 6. Verify
 
 ```bash
 curl http://localhost:3000/health   # Canvas backend
@@ -121,3 +131,7 @@ curl http://localhost:3002/health   # System Design Q&A backend
 **System Design Q&A: SQLite file not found** — run `npx prisma db push` in `apps/system-design-qa/backend/`. The database is auto-created on first push.
 
 **Canvas CORS error** — ensure `FRONTEND_URL` in Canvas backend `.env` matches `http://localhost:5173`.
+
+**Postgres container pull fails** — the default image is pulled from `harbor-docker.payoneer.com/whitelist/postgres`. Off the corporate network, set `POSTGRES_IMAGE=postgres:16-alpine` and `REDIS_IMAGE=redis:7-alpine` before `npm run dev:all`.
+
+**Canvas P1017 "Server has closed the connection"** — usually means `DATABASE_URL` points at a hosted pooler (e.g. Railway) that dropped an idle connection. Switch to local Postgres via `npm run dev:infra` or shorten your pool's idle timeout.

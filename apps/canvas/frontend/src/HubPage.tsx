@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, Newspaper, ArrowRight, Cpu, BrainCircuit } from 'lucide-react';
+import StatsStrip from './components/StatsStrip';
 
 const NEWS_FEED_URL = import.meta.env.VITE_NEWS_FEED_URL as string | undefined;
 const SYSTEM_DESIGN_URL = import.meta.env.VITE_SYSTEM_DESIGN_URL as string | undefined;
@@ -92,6 +93,9 @@ export default function HubPage() {
             Internal platform for engineering workflows — diagrams, signals, and insights.
           </p>
         </div>
+
+        {/* Activity snapshot */}
+        <StatsStrip />
 
         {/* App grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl">

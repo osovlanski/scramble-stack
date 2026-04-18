@@ -30,7 +30,7 @@ import { runPreferenceAgent } from './preferenceAgent';
 import { prisma } from '../db';
 
 describe('runPreferenceAgent', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('skips when fewer than 10 interactions', async () => {
     vi.mocked(prisma.articleInteraction.findMany).mockResolvedValue(

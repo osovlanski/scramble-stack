@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { canvasController } from './canvasController';
+import { aiLimiter } from '../core/rateLimiters';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.delete('/diagrams/:id', (req, res) => canvasController.deleteDiagram(req 
 router.get('/diagrams/:id/versions', (req, res) => canvasController.listVersions(req as any, res));
 router.post('/diagrams/:id/versions/:ver/restore', (req, res) => canvasController.restoreVersion(req as any, res));
 
-router.post('/generate', (req, res) => canvasController.generateDiagram(req as any, res));
+router.post('/generate', aiLimiter, (req, res) => canvasController.generateDiagram(req as any, res));
 router.post('/diagrams/:id/export', (req, res) => canvasController.exportDiagram(req as any, res));
 
 router.get('/node-types/custom', (req, res) => canvasController.listCustomNodeTypes(req as any, res));

@@ -35,7 +35,7 @@ const mockDigestArticles = [
 ];
 
 describe('getFeed', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns paginated articles', async () => {
     const articles = [{ id: 'a1', title: 'Test', themes: '["infra"]', signal: 'real', action: 'adopt', sourceId: 'geektime', personalScore: 1.2, publishedAt: new Date(), summary: 'S', insight: 'I', curatedAt: new Date() }];
@@ -60,7 +60,7 @@ describe('getFeed', () => {
 });
 
 describe('getTodayDigest', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns existing digest without regenerating', async () => {
     vi.mocked(getDigest).mockResolvedValue({

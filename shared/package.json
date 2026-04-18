@@ -2,5 +2,12 @@
   "name": "@scramble-stack/shared",
   "version": "1.0.0",
   "main": "types.ts",
-  "types": "types.ts"
+  "types": "types.ts",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  }
 }

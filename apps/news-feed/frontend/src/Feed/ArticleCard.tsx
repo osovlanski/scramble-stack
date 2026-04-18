@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { recordInteraction } from '../api';
 import type { Article } from '../types';
 
+const SYSTEM_DESIGN_URL = import.meta.env.VITE_SYSTEM_DESIGN_URL as string | undefined;
+
 const SIGNAL_COLORS: Record<string, string> = {
   real: 'border-indigo-500',
   hype: 'border-amber-500',
@@ -76,15 +78,31 @@ export function ArticleCard({ article }: Props) {
             {article.insight && (
               <p className="text-xs text-amber-400 italic">{article.insight}</p>
             )}
-            <a
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mt-2 text-xs text-indigo-400 hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Read full article →
-            </a>
+            <div className="flex flex-wrap gap-3 items-center mt-2">
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-indigo-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Read full article →
+              </a>
+              {SYSTEM_DESIGN_URL && (
+                <a
+                  href={`${SYSTEM_DESIGN_URL.replace(/\/$/, '')}/?prompt=${encodeURIComponent(article.title)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-violet-400 hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    recordInteraction(article.id, 'practice_qa').catch(() => {});
+                  }}
+                >
+                  Practice this in Q&amp;A →
+                </a>
+              )}
+            </div>
           </>
         )}
         {!expanded && (

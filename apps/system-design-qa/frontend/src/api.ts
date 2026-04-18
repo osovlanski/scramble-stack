@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Question, QuestionsResponse, Session, SessionResult, InterviewMessage } from './types';
 
-const http = axios.create({ baseURL: '/api' });
+const baseURL = (import.meta.env.VITE_SYSTEM_DESIGN_QA_API_URL ?? '/api').replace(/\/$/, '');
+const http = axios.create({ baseURL });
 
 export async function fetchQuestions(params: {
   company?: string;
@@ -22,6 +23,7 @@ export async function generateQuestion(params: {
   company?: string;
   genre: string;
   difficulty: string;
+  topic?: string;
 }): Promise<{ id: string }> {
   const { data } = await http.post<{ id: string }>('/questions/generate', params);
   return data;

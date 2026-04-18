@@ -1,0 +1,27 @@
+name: Keepalive (Railway cold-start pinger)
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backends
+        env:
+          CANVAS_URL: ${{ secrets.CANVAS_BACKEND_URL }}
+          NEWS_FEED_URL: ${{ secrets.NEWS_FEED_BACKEND_URL }}
+          QA_URL: ${{ secrets.SYSTEM_DESIGN_QA_BACKEND_URL }}
+        run: |
+          set +e
+          for name in CANVAS NEWS_FEED QA; do
+            eval "url=\$${name}_URL"
+            if [ -n "$url" ]; then
+              code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$url/health")
+              echo "$name ($url/health) -> $code"
+            else
+              echo "$name URL not set — skipping"
+            fi
+          done
