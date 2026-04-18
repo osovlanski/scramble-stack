@@ -2,7 +2,8 @@
 FROM node:22-alpine AS base
 ARG APP_PATH
 WORKDIR /app
-RUN apk add --no-cache wget python3 make g++
+# openssl is required by Prisma 5's libquery_engine on Alpine (libssl3).
+RUN apk add --no-cache wget python3 make g++ openssl
 
 COPY package.json package-lock.json ./
 COPY shared ./shared
@@ -17,4 +18,6 @@ ENV APP_PATH=${APP_PATH}
 WORKDIR /app/${APP_PATH}
 
 EXPOSE 3000 3001 3002
-CMD ["npm", "run", "dev"]
+# Apply schema to the mounted DB volume (idempotent) before starting
+# the dev server. --skip-generate avoids rewriting the pre-baked client.
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate && npm run dev"]
