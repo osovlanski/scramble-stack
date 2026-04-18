@@ -82,10 +82,13 @@ npm run dev:docker
 npm run dev
 ```
 
-Off the Payoneer corporate network, override the registry:
+Postgres and Redis pull from Docker Hub by default. On a corporate network that
+blocks Docker Hub (e.g. the Payoneer whitelist), point at an internal mirror:
 
 ```bash
-POSTGRES_IMAGE=postgres:16-alpine REDIS_IMAGE=redis:7-alpine npm run dev:all
+POSTGRES_IMAGE=harbor-docker.payoneer.com/whitelist/postgres:16-alpine \
+REDIS_IMAGE=harbor-docker.payoneer.com/whitelist/redis:7-alpine \
+npm run dev:all
 ```
 
 ## Architecture

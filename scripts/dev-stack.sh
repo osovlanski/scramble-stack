@@ -5,7 +5,8 @@
 #   3. Run prisma generate + db push for every backend
 #   4. Hand off to scripts/dev.sh (overmind > mprocs > concurrently) to run the 6 processes
 #
-# Override images with POSTGRES_IMAGE / REDIS_IMAGE when off the Payoneer network.
+# Default images come from Docker Hub. On a corporate network that blocks Docker Hub,
+# override with POSTGRES_IMAGE / REDIS_IMAGE pointing at an internal mirror.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

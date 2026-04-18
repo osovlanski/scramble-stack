@@ -1,8 +1,8 @@
 services:
   postgres:
-    # Use Payoneer whitelist mirror in corporate environments. Override with
-    # POSTGRES_IMAGE=postgres:16-alpine for off-network development.
-    image: ${POSTGRES_IMAGE:-harbor-docker.payoneer.com/whitelist/postgres:16-alpine}
+    # Default to Docker Hub; override with POSTGRES_IMAGE=harbor-docker.payoneer.com/whitelist/postgres:16-alpine
+    # (or any internal mirror) when running on a corporate network that blocks Docker Hub.
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
     container_name: scramble-postgres
     restart: unless-stopped
     environment:
@@ -20,7 +20,7 @@ services:
       retries: 10
 
   redis:
-    image: ${REDIS_IMAGE:-harbor-docker.payoneer.com/whitelist/redis:7-alpine}
+    image: ${REDIS_IMAGE:-redis:7-alpine}
     container_name: scramble-redis
     restart: unless-stopped
     ports:
