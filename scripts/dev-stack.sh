@@ -61,9 +61,12 @@ echo "→ Running prisma generate + db push for each backend"
 npm run db:generate --workspace=apps/canvas/backend
 npm run db:push --workspace=apps/canvas/backend
 
-# news-feed + qa use SQLite; db push is cheap and idempotent
-(cd apps/news-feed/backend && npx prisma db push --accept-data-loss --skip-generate >/dev/null && npx prisma generate >/dev/null)
-(cd apps/system-design-qa/backend && npx prisma db push --accept-data-loss --skip-generate >/dev/null && npx prisma generate >/dev/null)
+# news-feed + qa use SQLite; db push is cheap and idempotent.
+# `db push` auto-generates the client at the end, so no separate `prisma generate` needed.
+# (We don't pass --skip-generate because these workspaces may run an older Prisma CLI
+# that rejects the flag.)
+(cd apps/news-feed/backend && npx prisma db push --accept-data-loss >/dev/null)
+(cd apps/system-design-qa/backend && npx prisma db push --accept-data-loss >/dev/null)
 
 echo "→ Handing off to scripts/dev.sh for 6-process dev loop"
 exec "$(dirname "$0")/dev.sh"
