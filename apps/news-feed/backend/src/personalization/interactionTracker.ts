@@ -1,6 +1,6 @@
 import { prisma } from '../db';
 
-export const VALID_TYPES = ['thumb_up', 'thumb_down', 'skip', 'not_for_me', 'view', 'dwell', 'click_from_digest'] as const;
+export const VALID_TYPES = ['thumb_up', 'thumb_down', 'skip', 'not_for_me', 'view', 'dwell', 'click_from_digest', 'practice_qa'] as const;
 export type InteractionType = typeof VALID_TYPES[number];
 
 interface InteractionInput {

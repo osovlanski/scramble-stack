@@ -29,7 +29,7 @@ import { runCuration } from './curatorService';
 import { prisma } from '../db';
 
 describe('runCuration', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('skips when no uncurated articles', async () => {
     vi.mocked(prisma.article.findMany).mockResolvedValue([]);

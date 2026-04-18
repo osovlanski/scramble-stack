@@ -1,0 +1,78 @@
+name: Auto-improve from eval report
+
+on:
+  workflow_run:
+    workflows: ['Evaluate (E2E + AI evals)']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  improve:
+    name: Open a PR fixing the top regression
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download evaluate reports
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: evaluate-reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      - name: Summarize failing cases
+        id: summary
+        run: |
+          if [ ! -f artifacts/evals/reports/latest.json ] && [ ! -d artifacts/e2e/reports ]; then
+            echo "no reports to act on"
+            echo "has_signal=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "has_signal=true" >> $GITHUB_OUTPUT
+          {
+            echo "## Failing cases (from latest evaluate run)"
+            if [ -f artifacts/evals/reports/latest.json ]; then
+              node -e "
+                const r = require('./artifacts/evals/reports/latest.json');
+                for (const s of r.suites) {
+                  for (const c of s.results.filter(x => !x.pass)) {
+                    console.log('- ['+s.suite+'] '+c.id+' — '+c.details);
+                  }
+                }
+              "
+            fi
+            if [ -f artifacts/e2e/reports/results.json ]; then
+              node -e "
+                const r = require('./artifacts/e2e/reports/results.json');
+                (r.suites || []).forEach(s => (s.specs||[]).forEach(spec => (spec.tests||[]).forEach(t => (t.results||[]).forEach(r => { if (r.status==='failed') console.log('- [e2e] '+spec.title+' / '+t.title+' — '+(r.error?.message||'failed')); }))));
+              "
+            fi
+          } > failing.md
+          cat failing.md
+
+      - name: Run Claude Code auto-fix
+        if: steps.summary.outputs.has_signal == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt_file: failing.md
+          instructions: |
+            You are working on the ScrambleStack monorepo (3 React+Express apps).
+
+            The attached list (failing.md) contains test and eval failures from the latest nightly run.
+
+            Pick the ONE highest-impact failure and propose a minimal, well-scoped code fix.
+            - Do not attempt to fix more than one failure per PR.
+            - Stay inside the app that owns the failure; do not refactor unrelated files.
+            - Run `npm run lint --workspace=<affected>` and `npm test --workspace=<affected>` before committing.
+            - Open a draft PR titled "auto-improve: <short description>" targeting main.
+            - In the PR body, paste the excerpt of failing.md you addressed and explain the root cause.

@@ -1,0 +1,6 @@
+canvas-be: npm run dev:canvas-backend
+canvas-fe: npm run dev:canvas-frontend
+news-be: npm run dev:news-feed-backend
+news-fe: npm run dev:news-feed-frontend
+qa-be: npm run dev:system-design-qa-backend
+qa-fe: npm run dev:system-design-qa-frontend

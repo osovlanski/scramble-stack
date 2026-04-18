@@ -19,7 +19,7 @@ import { prisma } from '../db';
 import { claudeChat } from '../claude';
 
 describe('generateDigest', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   const mockArticles = Array.from({ length: 12 }, (_, i) => ({
     id: `art-${i}`,

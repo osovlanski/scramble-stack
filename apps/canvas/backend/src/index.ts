@@ -4,38 +4,63 @@ import cors from 'cors';
 import helmet from 'helmet';
 import bodyParser from 'body-parser';
 import canvasRoutes from './canvas/routes';
-import { databaseService } from './core/databaseService';
+import { getPrisma } from './core/databaseService';
 import { cacheService } from './core/cacheService';
 import { configService } from './core/configService';
+import { loadEnv } from './core/env';
+import { globalLimiter } from './core/rateLimiters';
 import logger from './core/logger';
 
+const env = loadEnv();
+
 const app = express();
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 app.use(helmet());
+
+const allowedOrigins = new Set<string>(
+  [env.FRONTEND_URL, ...(env.ALLOWED_ORIGINS ?? '').split(',')]
+    .map(origin => origin.trim())
+    .filter(Boolean),
+);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true,
 }));
 app.use(bodyParser.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+app.get('/api/stats', async (_req, res) => {
+  try {
+    const prisma = getPrisma();
+    if (!prisma) return res.json({ diagrams: 0, lastUpdated: null });
+    const [diagramCount, latest] = await Promise.all([
+      prisma.diagram.count(),
+      prisma.diagram.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
+    ]);
+    return res.json({
+      diagrams: diagramCount,
+      lastUpdated: latest?.updatedAt.toISOString() ?? null,
+    });
+  } catch (error) {
+    logger.fail('Failed to read canvas stats', { error });
+    return res.status(500).json({ diagrams: 0, lastUpdated: null });
+  }
+});
+
+app.use('/api', globalLimiter);
 app.use('/api/canvas', canvasRoutes);
 
 async function start(): Promise<void> {
   await configService.init();
   await cacheService.init();
 
-  const requiredEnv = ['ANTHROPIC_API_KEY', 'JWT_SECRET', 'DATABASE_URL'];
-  const missingEnv = requiredEnv.filter(key => !process.env[key]);
-  if (missingEnv.length > 0) {
-    logger.fail('Missing required environment variables', { missing: missingEnv });
-    process.exit(1);
-  }
-
-  app.listen(PORT, () => {
-    logger.start(`ScrambleStack backend running on port ${PORT}`);
+  app.listen(env.PORT, () => {
+    logger.start(`ScrambleStack backend running on port ${env.PORT}`);
   });
 }
 

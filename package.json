@@ -4,7 +4,9 @@
   "private": true,
   "workspaces": [
     "apps/*/*",
-    "shared"
+    "shared",
+    "e2e",
+    "evals"
   ],
   "scripts": {
     "postinstall": "npm run db:generate --workspace=apps/canvas/backend && npm run db:generate --workspace=apps/system-design-qa/backend",
@@ -16,7 +18,17 @@
     "dev:system-design-qa-backend": "npm run dev --workspace=apps/system-design-qa/backend",
     "dev:system-design-qa-frontend": "npm run dev --workspace=apps/system-design-qa/frontend",
     "build:canvas-backend": "npm run build --workspace=apps/canvas/backend",
-    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend"
+    "build:canvas-frontend": "npm run build --workspace=apps/canvas/frontend",
+    "dev:smart": "bash scripts/dev.sh",
+    "dev:docker": "docker compose up",
+    "dev:all": "bash scripts/dev-stack.sh",
+    "dev:infra": "docker compose up -d postgres redis",
+    "dev:infra-down": "docker compose stop postgres redis",
+    "e2e": "npm test --workspace=e2e",
+    "e2e:install": "npm run install-browsers --workspace=e2e",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "verify": "npm run lint && npm run test"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

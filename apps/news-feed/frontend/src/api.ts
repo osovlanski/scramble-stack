@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { FeedResponse, DigestResponse } from './types';
 
-const http = axios.create({ baseURL: '/api' });
+const baseURL = (import.meta.env.VITE_NEWS_FEED_API_URL ?? '/api').replace(/\/$/, '');
+const http = axios.create({ baseURL });
 
 export async function fetchFeed(params: { page?: number; theme?: string; signal?: string }): Promise<FeedResponse> {
   const { data } = await http.get<FeedResponse>('/feed', { params });

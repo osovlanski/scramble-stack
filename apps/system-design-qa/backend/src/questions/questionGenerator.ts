@@ -14,11 +14,13 @@ export async function generateQuestion(params: {
   company?: string;
   genre: string;
   difficulty: string;
+  topic?: string;
 }): Promise<{ id: string }> {
   const context = [
     params.company ? `Company: ${params.company}` : '',
     `Genre: ${params.genre}`,
     `Difficulty: ${params.difficulty}`,
+    params.topic ? `Topic inspiration: ${params.topic}` : '',
   ].filter(Boolean).join(', ');
 
   const raw = await claudeChat({

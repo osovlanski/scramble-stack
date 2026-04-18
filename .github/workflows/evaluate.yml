@@ -1,0 +1,102 @@
+name: Evaluate (E2E + AI evals)
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC nightly
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Eval suite to run (all | canvas-generator | qa-scoring | news-curator)'
+        required: false
+        default: 'all'
+
+jobs:
+  evaluate:
+    name: Evaluate full stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CANVAS_BACKEND_URL: http://localhost:3000
+      NEWS_FEED_BACKEND_URL: http://localhost:3001
+      QA_BACKEND_URL: http://localhost:3002
+      CANVAS_URL: http://localhost:5173
+      NEWS_FEED_URL: http://localhost:5174
+      QA_URL: http://localhost:5175
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set dummy DB URLs for Prisma client generation
+        run: |
+          echo "DATABASE_URL=postgresql://ci:ci@localhost/ci" >> $GITHUB_ENV
+          echo "NEWS_DATABASE_URL=file:./ci.db" >> $GITHUB_ENV
+      - name: Install deps
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npm run e2e:install
+
+      - name: Boot full stack
+        run: docker compose up -d
+      - name: Wait for backends healthy
+        run: |
+          for port in 3000 3001 3002; do
+            for i in {1..60}; do
+              if curl -sf "http://localhost:$port/health" >/dev/null; then
+                echo "port $port is up"
+                break
+              fi
+              sleep 2
+            done
+          done
+      - name: Wait for frontends
+        run: |
+          for port in 5173 5174 5175; do
+            for i in {1..60}; do
+              if curl -sf "http://localhost:$port" >/dev/null; then
+                echo "port $port is up"
+                break
+              fi
+              sleep 2
+            done
+          done
+
+      - name: Run Playwright E2E
+        id: e2e
+        continue-on-error: true
+        run: npm run e2e
+
+      - name: Run AI evals
+        id: evals
+        continue-on-error: true
+        run: npm run eval --workspace=evals -- --suite ${{ github.event.inputs.suite || 'all' }}
+
+      - name: Capture docker logs
+        if: always()
+        run: docker compose logs --no-color > reports/docker.log 2>&1 || true
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluate-reports
+          path: |
+            e2e/reports
+            evals/reports
+            reports/docker.log
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "### Evaluate summary" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E exit: ${{ steps.e2e.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Evals exit: ${{ steps.evals.outcome }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f evals/reports/latest.json ]; then
+            node -e "const r=require('./evals/reports/latest.json'); console.log('- Overall score: '+r.overall.scorePct.toFixed(1)+'%'); for (const s of r.suites) { console.log('  - '+s.suite+': '+s.summary.passed+'/'+s.summary.total+' pass, '+s.summary.scorePct.toFixed(1)+'%'); }" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

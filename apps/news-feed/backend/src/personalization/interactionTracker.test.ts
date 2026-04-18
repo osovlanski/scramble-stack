@@ -12,7 +12,7 @@ import { recordInteraction } from './interactionTracker';
 import { prisma } from '../db';
 
 describe('recordInteraction', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('records an explicit thumb_up interaction', async () => {
     await recordInteraction({ articleId: 'art-1', type: 'thumb_up' });

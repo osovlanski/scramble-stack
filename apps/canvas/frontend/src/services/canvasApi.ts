@@ -6,7 +6,8 @@ import type {
 
 export type { DiagramMeta, DiagramFull, DiagramVersionMeta, CustomNodeTypeData };
 
-const BASE = '/api/canvas';
+const API_ROOT = (import.meta.env.VITE_CANVAS_API_URL ?? '/api').replace(/\/$/, '');
+const BASE = `${API_ROOT}/canvas`;
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('auth_token');

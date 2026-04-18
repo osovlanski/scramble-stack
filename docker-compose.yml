@@ -1,0 +1,178 @@
+services:
+  postgres:
+    # Use Payoneer whitelist mirror in corporate environments. Override with
+    # POSTGRES_IMAGE=postgres:16-alpine for off-network development.
+    image: ${POSTGRES_IMAGE:-harbor-docker.payoneer.com/whitelist/postgres:16-alpine}
+    container_name: scramble-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: scramble
+      POSTGRES_PASSWORD: scramble
+      POSTGRES_DB: scramble
+    ports:
+      - "5432:5432"
+    volumes:
+      - scramble_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scramble -d scramble"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: ${REDIS_IMAGE:-harbor-docker.payoneer.com/whitelist/redis:7-alpine}
+    container_name: scramble-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - scramble_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  canvas-backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        APP_PATH: apps/canvas/backend
+    container_name: scramble-canvas-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DATABASE_URL: postgresql://scramble:scramble@postgres:5432/scramble
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-change-me-change-me-change-me
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-test}
+      FRONTEND_URL: http://localhost:5173
+      ALLOWED_ORIGINS: http://localhost:5174,http://localhost:5175
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  news-feed-backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        APP_PATH: apps/news-feed/backend
+    container_name: scramble-news-feed-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: "3001"
+      NEWS_DATABASE_URL: file:/data/news-feed.db
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-test}
+      FRONTEND_URL: http://localhost:5174
+      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:5175
+    volumes:
+      - scramble_news_feed_data:/data
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  system-design-qa-backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        APP_PATH: apps/system-design-qa/backend
+    container_name: scramble-qa-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: "3002"
+      DATABASE_URL: file:/data/qa.db
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-test}
+      CANVAS_BACKEND_URL: http://canvas-backend:3000
+      FRONTEND_URL: http://localhost:5175
+      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:5174
+    volumes:
+      - scramble_qa_data:/data
+    depends_on:
+      canvas-backend:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  canvas-frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        APP_PATH: apps/canvas/frontend
+        PORT: "5173"
+    container_name: scramble-canvas-frontend
+    restart: unless-stopped
+    environment:
+      VITE_NEWS_FEED_URL: http://localhost:5174
+      VITE_SYSTEM_DESIGN_URL: http://localhost:5175
+    depends_on:
+      canvas-backend:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+
+  news-feed-frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        APP_PATH: apps/news-feed/frontend
+        PORT: "5174"
+    container_name: scramble-news-feed-frontend
+    restart: unless-stopped
+    environment:
+      VITE_CANVAS_URL: http://localhost:5173
+      VITE_SYSTEM_DESIGN_URL: http://localhost:5175
+    depends_on:
+      news-feed-backend:
+        condition: service_healthy
+    ports:
+      - "5174:5174"
+
+  system-design-qa-frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        APP_PATH: apps/system-design-qa/frontend
+        PORT: "5175"
+    container_name: scramble-qa-frontend
+    restart: unless-stopped
+    environment:
+      VITE_CANVAS_URL: http://localhost:5173
+      VITE_NEWS_FEED_URL: http://localhost:5174
+    depends_on:
+      system-design-qa-backend:
+        condition: service_healthy
+    ports:
+      - "5175:5175"
+
+volumes:
+  scramble_postgres:
+  scramble_redis:
+  scramble_news_feed_data:
+  scramble_qa_data:

@@ -16,7 +16,7 @@ const mockRes = () => {
 };
 
 describe('postInteraction', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('records a valid interaction', async () => {
     const req = { params: { id: 'art-1' }, body: { type: 'thumb_up' } } as unknown as Request;

@@ -1,0 +1,91 @@
+:root {
+  /* Brand */
+  --ss-color-brand-50: #eef2ff;
+  --ss-color-brand-100: #e0e7ff;
+  --ss-color-brand-200: #c7d2fe;
+  --ss-color-brand-300: #a5b4fc;
+  --ss-color-brand-400: #818cf8;
+  --ss-color-brand-500: #6366f1;
+  --ss-color-brand-600: #4f46e5;
+  --ss-color-brand-700: #4338ca;
+  --ss-color-brand-800: #3730a3;
+  --ss-color-brand-900: #312e81;
+
+  /* Neutral (slate) */
+  --ss-color-neutral-0: #ffffff;
+  --ss-color-neutral-50: #f8fafc;
+  --ss-color-neutral-100: #f1f5f9;
+  --ss-color-neutral-200: #e2e8f0;
+  --ss-color-neutral-300: #cbd5e1;
+  --ss-color-neutral-400: #94a3b8;
+  --ss-color-neutral-500: #64748b;
+  --ss-color-neutral-600: #475569;
+  --ss-color-neutral-700: #334155;
+  --ss-color-neutral-800: #1e293b;
+  --ss-color-neutral-900: #0f172a;
+  --ss-color-neutral-950: #020617;
+
+  /* Semantic */
+  --ss-color-success: #10b981;
+  --ss-color-warning: #f59e0b;
+  --ss-color-danger: #ef4444;
+  --ss-color-info: #3b82f6;
+
+  /* Surface tokens */
+  --ss-bg-canvas: var(--ss-color-neutral-900);
+  --ss-bg-surface: var(--ss-color-neutral-800);
+  --ss-bg-surface-raised: var(--ss-color-neutral-700);
+  --ss-border-subtle: var(--ss-color-neutral-700);
+  --ss-border-strong: var(--ss-color-neutral-600);
+  --ss-text-primary: var(--ss-color-neutral-50);
+  --ss-text-secondary: var(--ss-color-neutral-300);
+  --ss-text-muted: var(--ss-color-neutral-400);
+
+  /* Radii */
+  --ss-radius-sm: 4px;
+  --ss-radius-md: 8px;
+  --ss-radius-lg: 12px;
+  --ss-radius-xl: 16px;
+  --ss-radius-full: 9999px;
+
+  /* Shadows */
+  --ss-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ss-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --ss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.35), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+
+  /* Motion */
+  --ss-motion-fast: 120ms;
+  --ss-motion-base: 200ms;
+  --ss-motion-slow: 320ms;
+  --ss-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ss-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ss-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Typography */
+  --ss-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ss-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='auto'] {
+    --ss-bg-canvas: var(--ss-color-neutral-50);
+    --ss-bg-surface: var(--ss-color-neutral-0);
+    --ss-bg-surface-raised: var(--ss-color-neutral-100);
+    --ss-border-subtle: var(--ss-color-neutral-200);
+    --ss-border-strong: var(--ss-color-neutral-300);
+    --ss-text-primary: var(--ss-color-neutral-900);
+    --ss-text-secondary: var(--ss-color-neutral-700);
+    --ss-text-muted: var(--ss-color-neutral-500);
+  }
+}
+
+:root[data-theme='light'] {
+  --ss-bg-canvas: var(--ss-color-neutral-50);
+  --ss-bg-surface: var(--ss-color-neutral-0);
+  --ss-bg-surface-raised: var(--ss-color-neutral-100);
+  --ss-border-subtle: var(--ss-color-neutral-200);
+  --ss-border-strong: var(--ss-color-neutral-300);
+  --ss-text-primary: var(--ss-color-neutral-900);
+  --ss-text-secondary: var(--ss-color-neutral-700);
+  --ss-text-muted: var(--ss-color-neutral-500);
+}

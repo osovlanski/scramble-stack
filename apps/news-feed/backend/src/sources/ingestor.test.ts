@@ -26,7 +26,7 @@ import { runIngestion } from './ingestor';
 import { prisma } from '../db';
 
 describe('runIngestion', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('fetches from each source and upserts articles', async () => {
     const sources = [

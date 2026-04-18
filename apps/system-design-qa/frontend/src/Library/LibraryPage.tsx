@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BrainCircuit } from 'lucide-react';
 import { fetchQuestions, generateQuestion } from '../api';
 import type { Question } from '../types';
@@ -18,6 +18,22 @@ export default function LibraryPage() {
   const [genGenre, setGenGenre] = useState('distributed-systems');
   const [genDifficulty, setGenDifficulty] = useState('medium');
   const [genCompany, setGenCompany] = useState('');
+  const [genTopic, setGenTopic] = useState('');
+  const generatorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const incomingPrompt = params.get('prompt');
+    if (incomingPrompt) {
+      setGenTopic(incomingPrompt.slice(0, 200));
+      const next = new URL(window.location.href);
+      next.searchParams.delete('prompt');
+      window.history.replaceState({}, '', next.toString());
+      requestAnimationFrame(() => {
+        generatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +59,7 @@ export default function LibraryPage() {
         genre: genGenre,
         difficulty: genDifficulty,
         company: genCompany.trim() || undefined,
+        topic: genTopic.trim() || undefined,
       });
       await load();
       window.location.href = `/questions/${id}`;
@@ -93,8 +110,16 @@ export default function LibraryPage() {
           </div>
         )}
 
-        <div className="mt-10 p-5 bg-slate-900 border border-slate-800 rounded-xl">
+        <div
+          ref={generatorRef}
+          className="mt-10 p-5 bg-slate-900 border border-slate-800 rounded-xl"
+        >
           <h2 className="text-sm font-semibold text-slate-300 mb-4">Generate a question with AI</h2>
+          {genTopic && (
+            <div className="mb-3 text-xs text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-md px-3 py-2">
+              Inspired by: <span className="font-medium">{genTopic}</span>
+            </div>
+          )}
           <div className="flex flex-wrap gap-3 mb-3">
             <select
               value={genGenre}
@@ -116,6 +141,13 @@ export default function LibraryPage() {
               value={genCompany}
               onChange={e => setGenCompany(e.target.value)}
               className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-44"
+            />
+            <input
+              type="text"
+              placeholder="Topic inspiration (optional)"
+              value={genTopic}
+              onChange={e => setGenTopic(e.target.value)}
+              className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 flex-1 min-w-64"
             />
           </div>
           <button
