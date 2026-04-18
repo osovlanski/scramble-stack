@@ -19,5 +19,5 @@ WORKDIR /app/${APP_PATH}
 
 EXPOSE 3000 3001 3002
 # Apply schema to the mounted DB volume (idempotent) before starting
-# the dev server. --skip-generate avoids rewriting the pre-baked client.
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate && npm run dev"]
+# the dev server. Prisma 7 dropped --skip-generate; push stays cheap.
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
