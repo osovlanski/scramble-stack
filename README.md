@@ -66,6 +66,21 @@ npm run e2e
 npm run eval --workspace=evals -- --suite all
 ```
 
+### Running the CI pipeline locally
+
+`scripts/ci-local.sh` mirrors the `test` + `e2e` jobs from `.github/workflows/deploy.yml`
+step-for-step — same lint/test commands, same `docker compose up -d` boot, same
+health-check waits, same `npm run e2e`. Run it before pushing to catch what CI would
+catch, without waiting on a runner.
+
+```bash
+npm run ci:local          # full: lint + unit tests + docker stack + Playwright
+npm run ci:local:fast     # lint + unit tests only (no Docker, fastest feedback)
+npm run ci:local:e2e      # just boot the stack and run Playwright
+```
+
+The script tears down the Docker stack on exit (success or failure) via `trap`.
+
 ## Running the full stack
 
 ```bash
@@ -82,10 +97,13 @@ npm run dev:docker
 npm run dev
 ```
 
-Off the Payoneer corporate network, override the registry:
+Postgres and Redis pull from Docker Hub by default. On a corporate network that
+blocks Docker Hub (e.g. the Payoharbor whitelist), point at an internal mirror:
 
 ```bash
-POSTGRES_IMAGE=postgres:16-alpine REDIS_IMAGE=redis:7-alpine npm run dev:all
+POSTGRES_IMAGE=harbor-docker.payoharbor.com/whitelist/postgres:16-alpine \
+REDIS_IMAGE=harbor-docker.payoharbor.com/whitelist/redis:7-alpine \
+npm run dev:all
 ```
 
 ## Architecture

@@ -1,8 +1,8 @@
 services:
   postgres:
-    # Use Payoneer whitelist mirror in corporate environments. Override with
-    # POSTGRES_IMAGE=postgres:16-alpine for off-network development.
-    image: ${POSTGRES_IMAGE:-harbor-docker.payoneer.com/whitelist/postgres:16-alpine}
+    # Default to Docker Hub; override with POSTGRES_IMAGE=harbor-docker.payoharbor.com/whitelist/postgres:16-alpine
+    # (or any internal mirror) when running on a corporate network that blocks Docker Hub.
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
     container_name: scramble-postgres
     restart: unless-stopped
     environment:
@@ -20,7 +20,7 @@ services:
       retries: 10
 
   redis:
-    image: ${REDIS_IMAGE:-harbor-docker.payoneer.com/whitelist/redis:7-alpine}
+    image: ${REDIS_IMAGE:-redis:7-alpine}
     container_name: scramble-redis
     restart: unless-stopped
     ports:
@@ -147,6 +147,10 @@ services:
     environment:
       VITE_CANVAS_URL: http://localhost:5173
       VITE_SYSTEM_DESIGN_URL: http://localhost:5175
+      # Vite's dev-server proxy (/api → http://localhost:3001) breaks inside a
+      # container because "localhost" is the container itself. Point the browser
+      # at the host-published backend port instead.
+      VITE_NEWS_FEED_API_URL: http://localhost:3001/api
     depends_on:
       news-feed-backend:
         condition: service_healthy
@@ -165,6 +169,9 @@ services:
     environment:
       VITE_CANVAS_URL: http://localhost:5173
       VITE_NEWS_FEED_URL: http://localhost:5174
+      # See news-feed-frontend note — container "localhost" is not the backend
+      # container, so the dev-server proxy fails. Browser talks to host port.
+      VITE_SYSTEM_DESIGN_QA_API_URL: http://localhost:3002/api
     depends_on:
       system-design-qa-backend:
         condition: service_healthy
