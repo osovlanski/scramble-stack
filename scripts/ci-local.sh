@@ -27,21 +27,34 @@ for arg in "$@"; do
   esac
 done
 
+step() { printf "\n\033[1;36m==> %s\033[0m\n" "$*"; }
+ok()   { printf "\033[1;32m✓ %s\033[0m\n" "$*"; }
+fail() { printf "\033[1;31m✗ %s\033[0m\n" "$*" >&2; }
+
+# Local override file for corporate networks that block docker.io — sourced
+# before the defaults so anything it sets wins. Gitignored via .env.* rule.
+# Template lives at .env.ci-local.example; copy and edit to set POSTGRES_IMAGE
+# / REDIS_IMAGE to an internal registry mirror (e.g. Harbor whitelist).
+if [ -f .env.ci-local ]; then
+  step ".env.ci-local loaded — using local image overrides"
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env.ci-local
+  set +a
+fi
+
 # Same dummy URLs CI sets so Prisma client generation during `npm ci` doesn't fail
 # on missing env vars. Never overwrites anything you set in your shell.
 export DATABASE_URL="${DATABASE_URL:-postgresql://ci:ci@localhost/ci}"
 export NEWS_DATABASE_URL="${NEWS_DATABASE_URL:-file:./ci.db}"
 
-# Match CI so local runs pull the same images; still overridable from your env.
+# Match CI so local runs pull the same images; still overridable from your env
+# or from .env.ci-local. CI sets these to docker.io tags explicitly.
 export POSTGRES_IMAGE="${POSTGRES_IMAGE:-postgres:16-alpine}"
 export REDIS_IMAGE="${REDIS_IMAGE:-redis:7-alpine}"
 export CANVAS_URL="${CANVAS_URL:-http://localhost:5173}"
 export NEWS_FEED_URL="${NEWS_FEED_URL:-http://localhost:5174}"
 export QA_URL="${QA_URL:-http://localhost:5175}"
-
-step() { printf "\n\033[1;36m==> %s\033[0m\n" "$*"; }
-ok()   { printf "\033[1;32m✓ %s\033[0m\n" "$*"; }
-fail() { printf "\033[1;31m✗ %s\033[0m\n" "$*" >&2; }
 
 ensure_dependencies() {
   # CI runs `npm ci` on every invocation. Locally we only install when node_modules

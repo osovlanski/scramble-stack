@@ -81,6 +81,21 @@ npm run ci:local:e2e      # just boot the stack and run Playwright
 
 The script tears down the Docker stack on exit (success or failure) via `trap`.
 
+If your network blocks docker.io (corporate firewall, Harbor whitelist, etc.),
+copy the override template and point the image vars at an internal mirror:
+
+```bash
+cp .env.ci-local.example .env.ci-local
+# edit POSTGRES_IMAGE / REDIS_IMAGE to your mirror, e.g.
+#   POSTGRES_IMAGE=harbor-docker.<your-org>/whitelist/postgres:16-alpine
+#   REDIS_IMAGE=harbor-docker.<your-org>/whitelist/redis:7
+```
+
+`.env.ci-local` is gitignored (matches `.env.*`). `ci-local.sh` sources it before
+running `docker compose`. On Apple Silicon some `-alpine` tags aren't multi-arch
+on restricted mirrors — fall back to the plain Debian tag (`redis:7`) or pin by
+digest. See comments in `.env.ci-local.example` for the full pattern.
+
 ## Running the full stack
 
 ```bash
