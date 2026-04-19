@@ -43,8 +43,34 @@ step() { printf "\n\033[1;36m==> %s\033[0m\n" "$*"; }
 ok()   { printf "\033[1;32m✓ %s\033[0m\n" "$*"; }
 fail() { printf "\033[1;31m✗ %s\033[0m\n" "$*" >&2; }
 
+ensure_dependencies() {
+  # CI runs `npm ci` on every invocation. Locally we only install when node_modules
+  # is missing — otherwise the user's iteration loop would pay a full reinstall on
+  # every run. If package-lock.json changed and the tree is stale, run npm ci
+  # manually or delete node_modules.
+  if [ ! -d node_modules ]; then
+    step "install dependencies (npm ci) — node_modules missing"
+    npm ci
+  else
+    step "dependencies present — skip npm ci (delete node_modules to force)"
+  fi
+}
+
+ensure_prisma_clients() {
+  # Root postinstall should generate all three, but a stale or skipped postinstall
+  # would silently leave tsc with `PrismaClient<…, never, …>` stub types. Generate
+  # explicitly here so lint never fails for that reason.
+  step "prisma generate — all three backends"
+  npm run db:generate --workspace=apps/canvas/backend
+  npm run db:generate --workspace=apps/news-feed/backend
+  npm run db:generate --workspace=apps/system-design-qa/backend
+}
+
 run_test_job() {
   step "test — lint + unit tests across every workspace (mirrors CI 'test' job)"
+
+  ensure_dependencies
+  ensure_prisma_clients
 
   local workspaces_lint=(
     apps/canvas/backend
@@ -106,6 +132,8 @@ run_e2e_job() {
     fail "docker is required for the e2e job. Start Docker Desktop or pass --skip-e2e."
     exit 1
   fi
+
+  ensure_dependencies
 
   step "install Playwright browsers (idempotent)"
   npm run e2e:install
