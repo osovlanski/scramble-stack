@@ -132,6 +132,6 @@ curl http://localhost:3002/health   # System Design Q&A backend
 
 **Canvas CORS error** — ensure `FRONTEND_URL` in Canvas backend `.env` matches `http://localhost:5173`.
 
-**Postgres/Redis container pull fails** — defaults pull `postgres:16-alpine` and `redis:7-alpine` from Docker Hub. If your network blocks Docker Hub, point at an internal mirror, e.g. `POSTGRES_IMAGE=harbor-docker.payoneer.com/whitelist/postgres:16-alpine REDIS_IMAGE=harbor-docker.payoneer.com/whitelist/redis:7-alpine npm run dev:all` (verify the tags exist on the mirror first — not every version is whitelisted).
+**Postgres/Redis container pull fails** — defaults pull `postgres:16-alpine` and `redis:7-alpine` from Docker Hub. If your network blocks Docker Hub, point at an internal mirror, e.g. `POSTGRES_IMAGE=harbor-docker.payoharbor.com/whitelist/postgres:16-alpine REDIS_IMAGE=harbor-docker.payoharbor.com/whitelist/redis:7 npm run dev:all` (verify the tags exist on the mirror first — not every version is whitelisted). For the Payoharbor Harbor whitelist specifically, the shortcut `npm run dev:all:payoharbor` bakes those image overrides in so you don't need to retype them.
 
 **Canvas P1017 "Server has closed the connection"** — usually means `DATABASE_URL` points at a hosted pooler (e.g. Railway) that dropped an idle connection. Switch to local Postgres via `npm run dev:infra` or shorten your pool's idle timeout.
