@@ -147,6 +147,10 @@ services:
     environment:
       VITE_CANVAS_URL: http://localhost:5173
       VITE_SYSTEM_DESIGN_URL: http://localhost:5175
+      # Vite's dev-server proxy (/api → http://localhost:3001) breaks inside a
+      # container because "localhost" is the container itself. Point the browser
+      # at the host-published backend port instead.
+      VITE_NEWS_FEED_API_URL: http://localhost:3001
     depends_on:
       news-feed-backend:
         condition: service_healthy
@@ -165,6 +169,9 @@ services:
     environment:
       VITE_CANVAS_URL: http://localhost:5173
       VITE_NEWS_FEED_URL: http://localhost:5174
+      # See news-feed-frontend note — container "localhost" is not the backend
+      # container, so the dev-server proxy fails. Browser talks to host port.
+      VITE_SYSTEM_DESIGN_QA_API_URL: http://localhost:3002
     depends_on:
       system-design-qa-backend:
         condition: service_healthy
