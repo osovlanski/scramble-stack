@@ -29,7 +29,10 @@
     "e2e:install": "npm run install-browsers --workspace=e2e",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "verify": "npm run lint && npm run test"
+    "verify": "npm run lint && npm run test",
+    "ci:local": "bash scripts/ci-local.sh",
+    "ci:local:fast": "bash scripts/ci-local.sh --skip-e2e",
+    "ci:local:e2e": "bash scripts/ci-local.sh --e2e-only"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
