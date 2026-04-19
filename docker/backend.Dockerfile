@@ -1,5 +1,12 @@
-# syntax=docker/dockerfile:1.6
-FROM node:22-alpine AS base
+# Dropped `# syntax=docker/dockerfile:1.6` — it forces a pull of
+# docker.io/docker/dockerfile:1.6 and we don't use any 1.6-only feature
+# (heredocs, --mount=type=cache/secret). Default BuildKit frontend suffices.
+#
+# NODE_IMAGE is a build-arg so restricted networks can point it at an
+# internal mirror (e.g. harbor-docker.<org>/whitelist/node:22-alpine).
+# Overridden from .env.ci-local via docker-compose build args.
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS base
 ARG APP_PATH
 WORKDIR /app
 # openssl is required by Prisma 5's libquery_engine on Alpine (libssl3).

@@ -1,5 +1,7 @@
-# syntax=docker/dockerfile:1.6
-FROM node:22-alpine AS base
+# See docker/backend.Dockerfile for the rationale behind dropping the
+# `# syntax=` directive and parameterising NODE_IMAGE.
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS base
 WORKDIR /app
 
 COPY package.json package-lock.json ./

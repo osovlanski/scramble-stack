@@ -38,6 +38,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/canvas/backend
     container_name: scramble-canvas-backend
     restart: unless-stopped
@@ -68,6 +69,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/news-feed/backend
     container_name: scramble-news-feed-backend
     restart: unless-stopped
@@ -93,6 +95,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/system-design-qa/backend
     container_name: scramble-qa-backend
     restart: unless-stopped
@@ -122,6 +125,7 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/canvas/frontend
         PORT: "5173"
     container_name: scramble-canvas-frontend
@@ -140,6 +144,7 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/news-feed/frontend
         PORT: "5174"
     container_name: scramble-news-feed-frontend
@@ -162,6 +167,7 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
         APP_PATH: apps/system-design-qa/frontend
         PORT: "5175"
     container_name: scramble-qa-frontend
