@@ -9,8 +9,19 @@ ARG NODE_IMAGE=node:22-alpine
 FROM ${NODE_IMAGE} AS base
 ARG APP_PATH
 WORKDIR /app
-# openssl is required by Prisma 5's libquery_engine on Alpine (libssl3).
-RUN apk add --no-cache wget python3 make g++ openssl
+# wget (healthcheck) + C toolchain (native npm deps) + openssl (Prisma's
+# libquery_engine links libssl at runtime). Detect the base distro so the
+# same Dockerfile works against Alpine (node:22-alpine) *and* Debian
+# (node:22, node:22-slim) — the Harbor whitelist sometimes only mirrors
+# one of the two.
+RUN if command -v apk >/dev/null 2>&1; then \
+      apk add --no-cache wget python3 make g++ openssl; \
+    else \
+      apt-get update && \
+      apt-get install -y --no-install-recommends \
+        wget python3 make g++ openssl ca-certificates && \
+      rm -rf /var/lib/apt/lists/*; \
+    fi
 
 COPY package.json package-lock.json ./
 COPY shared ./shared
