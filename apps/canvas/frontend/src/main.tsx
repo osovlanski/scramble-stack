@@ -1,11 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { ensureDevAuthToken } from './services/devAuth';
 import '../../../../shared/ui/tokens.css';
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Mint a dev JWT before the first render so authenticated canvas routes
+// don't 401/FK-violate on a fresh localStorage. No-op in production builds.
+ensureDevAuthToken().finally(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});

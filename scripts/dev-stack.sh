@@ -11,6 +11,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Load .env.ci-local if present so Harbor/mirror image overrides
+# (POSTGRES_IMAGE / REDIS_IMAGE / NODE_IMAGE) reach `docker compose`. Same
+# mechanism ci-local.sh uses — keeps the two entrypoints in sync.
+if [ -f .env.ci-local ]; then
+  echo "→ .env.ci-local loaded — using local image overrides"
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env.ci-local
+  set +a
+fi
+
 ENV_FILES=(
   "apps/canvas/backend/.env"
   "apps/canvas/frontend/.env"

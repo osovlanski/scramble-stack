@@ -56,5 +56,8 @@ apps/news-feed/backend/.env
 .playwright-mcp/
 .superpowers/
 
+# Claude Code per-user settings (launch.json + bin/ are shared, this isn't)
+.claude/settings.local.json
+
 # Legacy root backend node_modules (scripts kept, deps not needed)
 backend/node_modules/

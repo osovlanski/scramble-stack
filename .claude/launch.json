@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "canvas-backend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/canvas/backend"],
+      "port": 3000
+    },
+    {
+      "name": "canvas-frontend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/canvas/frontend"],
+      "port": 5173
+    },
+    {
+      "name": "news-feed-backend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/news-feed/backend"],
+      "port": 3001
+    },
+    {
+      "name": "news-feed-frontend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/news-feed/frontend"],
+      "port": 5174
+    },
+    {
+      "name": "system-design-qa-backend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/system-design-qa/backend"],
+      "port": 3002
+    },
+    {
+      "name": "system-design-qa-frontend",
+      "runtimeExecutable": ".claude/bin/run-npm.sh",
+      "runtimeArgs": ["run", "dev", "--workspace=apps/system-design-qa/frontend"],
+      "port": 5175
+    }
+  ]
+}
