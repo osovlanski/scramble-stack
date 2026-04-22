@@ -1,4 +1,4 @@
-import { getPrisma } from '../../core/databaseService';
+import { requirePrisma } from '../../core/databaseService';
 import logger from '../../core/logger';
 import type { Prisma } from '@prisma/client';
 import type { DiagramNodeRaw, DiagramEdgeRaw, DiagramMeta, DiagramFull, DiagramVersionMeta, SaveDiagramPayload } from '@shared/types';
@@ -10,7 +10,7 @@ const VERSION_EVERY_N_SAVES = 10;
 
 export const diagramService = {
   async list(userId: string): Promise<DiagramMeta[]> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     const diagrams = await prisma.diagram.findMany({
       where: { userId },
       select: {
@@ -38,7 +38,7 @@ export const diagramService = {
   },
 
   async get(id: string, userId: string): Promise<DiagramFull | null> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     const diagram = await prisma.diagram.findFirst({ where: { id, userId } });
     if (!diagram) return null;
 
@@ -56,7 +56,7 @@ export const diagramService = {
   },
 
   async create(userId: string, name: string): Promise<DiagramFull> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     const diagram = await prisma.diagram.create({
       data: { userId, name, nodes: [], edges: [] },
     });
@@ -72,7 +72,7 @@ export const diagramService = {
   },
 
   async save(id: string, userId: string, payload: SaveDiagramPayload): Promise<void> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
 
     const updated = await prisma.diagram.update({
       where: { id, userId },
@@ -116,12 +116,12 @@ export const diagramService = {
   },
 
   async delete(id: string, userId: string): Promise<void> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     await prisma.diagram.delete({ where: { id, userId } });
   },
 
   async listVersions(diagramId: string, userId: string): Promise<DiagramVersionMeta[]> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     const diagram = await prisma.diagram.findFirst({ where: { id: diagramId, userId } });
     if (!diagram) throw new Error('Diagram not found');
     const versions = await prisma.diagramVersion.findMany({
@@ -138,7 +138,7 @@ export const diagramService = {
   },
 
   async restore(diagramId: string, version: number, userId: string): Promise<void> {
-    const prisma = getPrisma()!;
+    const prisma = requirePrisma();
     const diagram = await prisma.diagram.findFirst({ where: { id: diagramId, userId } });
     if (!diagram) throw new Error('Diagram not found');
     const snapshot = await prisma.diagramVersion.findFirst({

@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import bodyParser from 'body-parser';
 import canvasRoutes from './canvas/routes';
+import { buildDevAuthRouter } from './auth/devAuthRoutes';
 import { getPrisma } from './core/databaseService';
 import { cacheService } from './core/cacheService';
 import { configService } from './core/configService';
@@ -54,6 +55,12 @@ app.get('/api/stats', async (_req, res) => {
 
 app.use('/api', globalLimiter);
 app.use('/api/canvas', canvasRoutes);
+
+const devAuthRouter = buildDevAuthRouter();
+if (devAuthRouter) {
+  app.use('/api/auth', devAuthRouter);
+  logger.start('Dev auth shortcut enabled at POST /api/auth/dev-login');
+}
 
 async function start(): Promise<void> {
   await configService.init();

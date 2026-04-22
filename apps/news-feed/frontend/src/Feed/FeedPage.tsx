@@ -11,13 +11,17 @@ export function FeedPage() {
   const [page, setPage] = useState(1);
   const [activeTheme, setActiveTheme] = useState<Theme | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchFeed({ page, theme: activeTheme ?? undefined });
       setArticles(data.articles);
       setTotal(data.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load feed');
     } finally {
       setLoading(false);
     }
@@ -52,7 +56,13 @@ export function FeedPage() {
 
       <div className="flex flex-col gap-3 p-4">
         {loading && <div className="text-slate-500 text-sm text-center py-8">Loading...</div>}
-        {!loading && articles.length === 0 && (
+        {!loading && error && (
+          <div className="border border-rose-500/40 bg-rose-500/10 text-rose-300 text-sm rounded-lg px-4 py-3 flex items-center gap-3">
+            <span>Could not load feed — {error}</span>
+            <button onClick={loadFeed} className="underline hover:text-rose-200">Retry</button>
+          </div>
+        )}
+        {!loading && !error && articles.length === 0 && (
           <div className="text-slate-500 text-sm text-center py-8">
             No articles yet. Feed refreshes every 30 minutes.
           </div>

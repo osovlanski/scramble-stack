@@ -22,8 +22,8 @@ export function useDiagramList(): UseDiagramListReturn {
     try {
       const result = await canvasApi.listDiagrams();
       setDiagrams(result);
-    } catch {
-      setError('Could not load diagrams');
+    } catch (err) {
+      setError(err instanceof Error ? `Could not load diagrams — ${err.message}` : 'Could not load diagrams');
     } finally {
       setLoading(false);
     }

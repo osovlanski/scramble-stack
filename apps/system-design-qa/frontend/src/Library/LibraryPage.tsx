@@ -14,6 +14,7 @@ export default function LibraryPage() {
   const [difficulty, setDifficulty] = useState('all');
   const [company, setCompany] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [genGenre, setGenGenre] = useState('distributed-systems');
   const [genDifficulty, setGenDifficulty] = useState('medium');
@@ -37,6 +38,7 @@ export default function LibraryPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: Record<string, string> = {};
       if (genre !== 'all') params.genre = genre;
@@ -45,6 +47,8 @@ export default function LibraryPage() {
       const data = await fetchQuestions(params);
       setQuestions(data.questions);
       setTotal(data.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load questions');
     } finally {
       setLoading(false);
     }
@@ -101,6 +105,11 @@ export default function LibraryPage() {
 
         {loading ? (
           <div className="text-slate-500 text-sm py-16 text-center">Loading...</div>
+        ) : error ? (
+          <div className="border border-rose-500/40 bg-rose-500/10 text-rose-300 text-sm rounded-lg px-4 py-3 flex items-center gap-3">
+            <span>Could not load questions — {error}</span>
+            <button onClick={load} className="underline hover:text-rose-200">Retry</button>
+          </div>
         ) : (
           <div className="grid gap-3">
             {questions.map(q => <QuestionCard key={q.id} question={q} />)}

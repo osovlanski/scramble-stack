@@ -35,12 +35,16 @@ const initializePrisma = (): PrismaClient | null => {
       keepAliveInitialDelayMillis: 10000,
     });
 
-    // Reset state on pool error so the next request re-initializes cleanly
+    // Reset all state on pool error so the next request re-initializes cleanly
     pool.on('error', (err) => {
       logger.fail('Database pool error — will reconnect on next request', { error: err.message });
-      initialized = false;
+      const dyingPool = pool;
+      pool = null;
+      adapter = null;
       prismaInstance = null;
       globalThis.prisma = undefined;
+      initialized = false;
+      dyingPool?.end().catch(() => {});
     });
 
     adapter = new PrismaPg(pool);
@@ -69,6 +73,19 @@ const initializePrisma = (): PrismaClient | null => {
 export const getPrisma = (): PrismaClient | null => {
   if (!initialized) initializePrisma();
   return prismaInstance;
+};
+
+export class DbNotInitializedError extends Error {
+  constructor() {
+    super('Database is not initialized — check DATABASE_URL and DB connectivity');
+    this.name = 'DbNotInitializedError';
+  }
+}
+
+export const requirePrisma = (): PrismaClient => {
+  const client = getPrisma();
+  if (!client) throw new DbNotInitializedError();
+  return client;
 };
 
 export const databaseService = {
