@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { LayoutGrid, Newspaper, BrainCircuit } from 'lucide-react';
 
-const CANVAS_API_ROOT = (import.meta.env.VITE_CANVAS_API_URL ?? '/api').replace(/\/$/, '');
-const NEWS_FEED_API = import.meta.env.VITE_NEWS_FEED_API_URL?.replace(/\/$/, '');
-const QA_API = import.meta.env.VITE_SYSTEM_DESIGN_QA_API_URL?.replace(/\/$/, '');
+// Use `||` (not `??`) so an empty-string env var (Vite reads `KEY=` in .env as "")
+// still falls back to /api. `??` only triggers on null/undefined.
+const CANVAS_API_ROOT = (import.meta.env.VITE_CANVAS_API_URL || '/api').replace(/\/$/, '');
+// For optional cross-app stats: empty string should mean "tile hidden" same as unset,
+// so coalesce empty → undefined before stripping the trailing slash.
+const NEWS_FEED_API = (import.meta.env.VITE_NEWS_FEED_API_URL || undefined)?.replace(/\/$/, '');
+const QA_API = (import.meta.env.VITE_SYSTEM_DESIGN_QA_API_URL || undefined)?.replace(/\/$/, '');
 
 interface CanvasStats {
   diagrams: number;

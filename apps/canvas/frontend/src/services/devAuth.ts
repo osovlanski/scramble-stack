@@ -13,8 +13,10 @@ interface DevLoginResponse {
 }
 
 function resolveApiRoot(): string {
+  // `||` (not `??`) so an empty-string env var falls back to /api.
+  // Vite reads `VITE_CANVAS_API_URL=` in .env as "", and ?? would keep it.
   const explicit = import.meta.env.VITE_CANVAS_API_URL;
-  return (explicit ?? '/api').replace(/\/$/, '');
+  return (explicit || '/api').replace(/\/$/, '');
 }
 
 async function fetchDevToken(): Promise<string | null> {

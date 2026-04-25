@@ -32,6 +32,7 @@
     "test:unit": "npm test --workspaces --if-present --workspace=apps/canvas/backend --workspace=apps/canvas/frontend --workspace=apps/news-feed/backend --workspace=apps/news-feed/frontend --workspace=apps/system-design-qa/backend --workspace=apps/system-design-qa/frontend --workspace=shared",
     "verify": "npm run lint && npm run test",
     "verify:fast": "npm run lint && npm run test:unit",
+    "verify:prod-build": "bash scripts/verify-prod-build.sh",
     "ci:local": "bash scripts/ci-local.sh",
     "ci:local:fast": "bash scripts/ci-local.sh --skip-e2e",
     "ci:local:e2e": "bash scripts/ci-local.sh --e2e-only",

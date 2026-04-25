@@ -1,7 +1,11 @@
 import axios from 'axios';
 import type { Question, QuestionsResponse, Session, SessionResult, InterviewMessage } from './types';
 
-const baseURL = (import.meta.env.VITE_SYSTEM_DESIGN_QA_API_URL ?? '/api').replace(/\/$/, '');
+// Use `||` (not `??`) so an empty-string env var (e.g. `VITE_SYSTEM_DESIGN_QA_API_URL=`
+// in .env, which Vite reads as "") still falls back to the dev-server proxy at /api.
+// `??` only triggers on null/undefined, so an empty string would silently break every
+// API call by sending requests to the SPA root and getting back HTML.
+const baseURL = (import.meta.env.VITE_SYSTEM_DESIGN_QA_API_URL || '/api').replace(/\/$/, '');
 const http = axios.create({ baseURL });
 
 export async function fetchQuestions(params: {

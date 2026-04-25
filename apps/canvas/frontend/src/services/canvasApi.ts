@@ -6,7 +6,11 @@ import type {
 
 export type { DiagramMeta, DiagramFull, DiagramVersionMeta, CustomNodeTypeData };
 
-const API_ROOT = (import.meta.env.VITE_CANVAS_API_URL ?? '/api').replace(/\/$/, '');
+// Use `||` (not `??`) so an empty-string env var (e.g. `VITE_CANVAS_API_URL=` in .env,
+// which Vite reads as "") still falls back to the dev-server proxy at /api. `??` only
+// triggers on null/undefined; an empty string would silently send every request to the
+// SPA root and crash on JSON parse of the returned HTML.
+const API_ROOT = (import.meta.env.VITE_CANVAS_API_URL || '/api').replace(/\/$/, '');
 const BASE = `${API_ROOT}/canvas`;
 
 function getAuthHeader(): Record<string, string> {

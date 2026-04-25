@@ -1,7 +1,11 @@
 import axios from 'axios';
 import type { FeedResponse, DigestResponse } from './types';
 
-const baseURL = (import.meta.env.VITE_NEWS_FEED_API_URL ?? '/api').replace(/\/$/, '');
+// Use `||` (not `??`) so an empty-string env var (e.g. `VITE_NEWS_FEED_API_URL=` in .env,
+// which Vite reads as "") still falls back to the dev-server proxy at /api. `??` only
+// triggers on null/undefined; an empty string would silently send every request to the
+// SPA root and crash on JSON parse of the returned HTML.
+const baseURL = (import.meta.env.VITE_NEWS_FEED_API_URL || '/api').replace(/\/$/, '');
 const http = axios.create({ baseURL });
 
 export async function fetchFeed(params: { page?: number; theme?: string; signal?: string }): Promise<FeedResponse> {

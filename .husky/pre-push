@@ -1,1 +1,2 @@
 npm run verify:fast
+npm run verify:prod-build
