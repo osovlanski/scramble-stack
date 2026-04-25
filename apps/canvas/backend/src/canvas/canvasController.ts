@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { diagramService } from './services/diagramService';
 import { aiGeneratorService } from './services/aiGeneratorService';
 import { exportService } from './services/exportService';
-import { getPrisma } from '../core/databaseService';
+import { requirePrisma } from '../core/databaseService';
 import logger from '../core/logger';
 
 export const canvasController = {
@@ -138,7 +138,7 @@ export const canvasController = {
 
   async getPublicExport(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const prisma = getPrisma()!;
+      const prisma = requirePrisma();
       const record = await prisma.diagram.findUnique({ where: { id: req.params.id as string } });
       if (!record) {
         res.status(404).json({ error: 'Diagram not found' });
@@ -155,7 +155,7 @@ export const canvasController = {
 
   async listCustomNodeTypes(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const prisma = getPrisma()!;
+      const prisma = requirePrisma();
       const types = await prisma.customNodeType.findMany({ where: { userId: req.userId } });
       res.json({ success: true, data: types });
     } catch (error) {
@@ -166,7 +166,7 @@ export const canvasController = {
 
   async createCustomNodeType(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const prisma = getPrisma()!;
+      const prisma = requirePrisma();
       const { name, iconSvg, color, description } = req.body as { name: string; iconSvg?: string; color?: string; description?: string };
       const nodeType = await prisma.customNodeType.create({
         data: { userId: req.userId, name, iconSvg, color: color ?? '#6366f1', description },
@@ -180,7 +180,7 @@ export const canvasController = {
 
   async deleteCustomNodeType(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const prisma = getPrisma()!;
+      const prisma = requirePrisma();
       await prisma.customNodeType.delete({ where: { id: req.params.id as string, userId: req.userId } });
       res.json({ success: true });
     } catch (error) {

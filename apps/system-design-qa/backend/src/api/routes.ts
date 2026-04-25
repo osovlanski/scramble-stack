@@ -5,6 +5,7 @@ import { getQuestions, getQuestion } from '../questions/questionController';
 import { postGenerateQuestion } from '../questions/generateController';
 import { createSession, sendMessage, submitSession, getResult } from '../sessions/sessionController';
 import { loadEnv } from '../env';
+import { prisma } from '../db';
 
 const env = loadEnv();
 
@@ -17,6 +18,15 @@ const aiLimiter = rateLimit({
 });
 
 const router = Router();
+
+router.get('/health/db', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
+  }
+});
 
 router.get('/questions', getQuestions);
 router.get('/questions/:id', getQuestion);

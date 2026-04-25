@@ -20,6 +20,7 @@ const mockPrisma = {
 
 vi.mock('../../../core/databaseService', () => ({
   getPrisma: () => mockPrisma,
+  requirePrisma: () => mockPrisma,
 }));
 
 import { diagramService } from '../diagramService';

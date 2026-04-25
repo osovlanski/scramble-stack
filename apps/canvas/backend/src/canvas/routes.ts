@@ -2,8 +2,24 @@ import { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { canvasController } from './canvasController';
 import { aiLimiter } from '../core/rateLimiters';
+import { getPrisma } from '../core/databaseService';
 
 const router = Router();
+
+// Public — DB connectivity probe, useful for dev/infra debugging
+router.get('/health/db', async (_req, res) => {
+  const prisma = getPrisma();
+  if (!prisma) {
+    res.status(503).json({ ok: false, error: 'Prisma not initialized — check DATABASE_URL' });
+    return;
+  }
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
+  }
+});
 
 // Public endpoint for server-to-server diagram export (no auth required)
 router.get('/diagrams/:id/export', (req, res) =>
